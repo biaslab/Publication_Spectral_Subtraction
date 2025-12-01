@@ -1,0 +1,62 @@
+# Example INCORRECT SEM Hearing Aid Configuration - Invalid s >= n Relationship
+# This file contains invalid time constant relationship errors
+#
+# ERRORS IN THIS FILE:
+# - s >= n: s = 20000.0, n = 10000.0 (s should be < n, as s tracks speech envelope which must be faster)
+
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 2
+
+# SEM requires speech, noise, and ξ_smooth time constants
+[parameters.backend.filters.time_constants90]
+s = 20000.0 # ERROR: s >= n (s should be < n)
+n = 10000.0 # Noise time constant (ms)
+xnr = 100.0 # ξ_smooth time constant (ms)
+
+# SEM requires speech, noise, and ξ_smooth priors
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.priors.noise]
+mean = 70.0
+precision = 1.0
+
+[parameters.backend.priors.xnr_smooth]
+mean = 0.0
+precision = 1.0
+
+[parameters.backend.gain]
+slope = 1.0
+threshold = 12.0
+
+[parameters.backend.switch]
+slope = 8.0
+threshold = 4.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "SEM Hearing Aid configuration (INCORRECT - s >= n relationship)"
+name = "SEM"

@@ -1,0 +1,6 @@
+[submodule "dependencies/HADatasets"]
+	path = dependencies/HADatasets
+	url = https://github.com/biaslab/HADatasets.git
+[submodule "dependencies/VirtualHearingAid"]
+	path = dependencies/VirtualHearingAid
+	url = https://github.com/biaslab/VirtualHearingAid.jl.git

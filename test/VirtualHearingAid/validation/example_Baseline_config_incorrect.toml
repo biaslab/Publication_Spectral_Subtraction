@@ -1,0 +1,33 @@
+# Example INCORRECT Baseline Hearing Aid Configuration
+# This file contains various validation errors to test error handling
+# 
+# ERRORS IN THIS FILE:
+# - Missing frontend field: buffer_size_s
+# - Integer instead of float: fs, spl_reference_db
+# - Missing hearingaid field: type
+
+[parameters.hearingaid]
+name = "Baseline Hearing Aid"
+# type = "BaselineHearingAid"  # MISSING - should cause error
+processing_strategy = "streaming"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000                               # ERROR: Integer instead of Float
+spl_reference_db = 100                   # ERROR: Integer instead of Float
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+# buffer_size_s = 0.0015  # MISSING - should cause error
+
+[parameters.backend.general]
+name = "Baseline"
+type = "BaselineBackend"
+
+# Optional metadata
+[metadata]
+author = "Marco Hidalgo-Araya"
+date = "2025-04-03"
+description = "Baseline Hearing Aid configuration (INCORRECT)"
+name = "Baseline"

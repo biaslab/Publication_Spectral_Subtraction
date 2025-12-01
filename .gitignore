@@ -1,0 +1,31 @@
+# Data folders - these contain large audio files and should not be tracked
+data/
+results/
+
+# Database testset folders - ignore all audio data directories and their contents
+# These patterns will ignore the directories and all .wav files within them
+databases/**/clean_testset_wav/
+databases/**/noisy_testset_wav/
+databases/**/clean_testset_wav/**
+databases/**/noisy_testset_wav/**
+
+# Julia specific
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+deps/deps.jl
+docs/build/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp

@@ -1,0 +1,67 @@
+# Example INCORRECT SEM Hearing Aid Configuration - Negative Values
+# This file contains negative value errors to test error handling
+#
+# ERRORS IN THIS FILE:
+# - Negative time constant: s = -5.0
+# - Negative time constant: n = -10000.0
+# - Negative precision (speech): precision = -1.0
+# - Negative precision (noise): precision = -1.0
+# - Negative gain slope: slope = -1.0
+# - Negative switch slope: slope = -8.0
+
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 2
+
+# SEM requires speech, noise, and ξ_smooth time constants
+[parameters.backend.filters.time_constants90]
+s = -5.0     # ERROR: Negative time constant
+n = -10000.0 # ERROR: Negative time constant
+xnr = -100.0 # ERROR: Negative time constant
+
+# SEM requires speech, noise, and ξ_smooth priors
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = -1.0 # ERROR: Negative precision
+
+[parameters.backend.priors.noise]
+mean = 70.0
+precision = -1.0 # ERROR: Negative precision
+
+[parameters.backend.priors.xnr_smooth]
+mean = 0.0
+precision = -1.0 # ERROR: Negative precision
+
+[parameters.backend.gain]
+slope = -1.0     # ERROR: Negative slope
+threshold = 12.0
+
+[parameters.backend.switch]
+slope = -8.0    # ERROR: Negative slope
+threshold = 4.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "SEM Hearing Aid configuration (INCORRECT - negative values)"
+name = "SEM"

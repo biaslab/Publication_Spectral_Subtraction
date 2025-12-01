@@ -1,0 +1,26 @@
+[parameters.hearingaid]
+name = "Baseline Hearing Aid"
+type = "BaselineHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "Baseline"
+type = "BaselineBackend"
+
+# Optional metadata
+[metadata]
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline Hearing Aid configuration"
+name = "Baseline"
+

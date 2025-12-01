@@ -1,0 +1,77 @@
+# Example INCORRECT SEM Hearing Aid Configuration
+# This file contains various validation errors to test error handling
+#
+# ERRORS IN THIS FILE:
+# - Wrong type for autostart: string instead of bool
+# - Wrong type for free_energy: integer instead of bool
+# - Wrong type for iterations: float instead of integer
+# - Integer instead of float: time constants s and n
+# - Negative time constant: s = -5.0
+# - s >= n: s = 20000.0, n = 10000.0 (s should be < n)
+# - Integer instead of float: prior mean and precision
+# - Negative precision: precision = -1.0
+# - Integer instead of float: gain slope and threshold
+# - Negative/zero slope: gain slope = -1.0
+# - Integer instead of float: switch slope and threshold
+# - Zero slope: switch slope = 0.0
+
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = "true" # ERROR: String instead of Bool
+free_energy = 0    # ERROR: Integer instead of Bool
+iterations = 2.5   # ERROR: Float instead of Integer
+
+# SEM requires speech, noise, and ξ_smooth time constants
+[parameters.backend.filters.time_constants90]
+s = 5     # ERROR: Integer instead of Float (also will be negative in another test)
+n = 10000 # ERROR: Integer instead of Float
+xnr = 100 # ERROR: Integer instead of Float
+# Also test: s = -5.0 (negative), s = 20000.0 >= n = 10000.0 (invalid relationship)
+
+# SEM requires speech, noise, and ξ_smooth priors
+[parameters.backend.priors.speech]
+mean = 80     # ERROR: Integer instead of Float
+precision = 1 # ERROR: Integer instead of Float
+# Also test: precision = -1.0 (negative)
+
+[parameters.backend.priors.noise]
+mean = 70     # ERROR: Integer instead of Float
+precision = 1 # ERROR: Integer instead of Float
+
+[parameters.backend.priors.xnr_smooth]
+mean = 0      # ERROR: Integer instead of Float
+precision = 1 # ERROR: Integer instead of Float
+
+[parameters.backend.gain]
+slope = 1      # ERROR: Integer instead of Float
+threshold = 12 # ERROR: Integer instead of Float
+# Also test: slope = -1.0 (negative), slope = 0.0 (zero)
+
+[parameters.backend.switch]
+slope = 8     # ERROR: Integer instead of Float
+threshold = 4 # ERROR: Integer instead of Float
+# Also test: slope = 0.0 (zero), slope = -8.0 (negative)
+
+[metadata]
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "SEM Hearing Aid configuration (INCORRECT - multiple validation errors)"
+name = "SEM"

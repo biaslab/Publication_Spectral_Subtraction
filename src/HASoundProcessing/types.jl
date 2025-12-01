@@ -1,0 +1,6 @@
+abstract type AbstractSPMBackend end
+abstract type AbstractSPMParameters end
+abstract type AbstractSPMFilter end
+abstract type AbstractSPMStates end
+abstract type AbstractSPMFilterParameters end
+abstract type AbstractInferenceParameters end
