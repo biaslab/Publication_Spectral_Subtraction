@@ -9,6 +9,10 @@ databases/**/noisy_testset_wav/
 databases/**/clean_testset_wav/**
 databases/**/noisy_testset_wav/**
 
+# Ignore testset text files
+databases/**/testset_txt/
+databases/**/testset_txt/**
+
 # Julia specific
 *.jl.cov
 *.jl.*.cov
