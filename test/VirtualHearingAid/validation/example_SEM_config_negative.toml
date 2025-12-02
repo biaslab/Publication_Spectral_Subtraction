@@ -6,8 +6,6 @@
 # - Negative time constant: n = -10000.0
 # - Negative precision (speech): precision = -1.0
 # - Negative precision (noise): precision = -1.0
-# - Negative gain slope: slope = -1.0
-# - Negative switch slope: slope = -8.0
 
 [parameters.hearingaid]
 name = "SEM Hearing Aid"
@@ -33,13 +31,13 @@ autostart = true
 free_energy = false
 iterations = 2
 
-# SEM requires speech, noise, and ξ_smooth time constants
+# SEM requires speech, noise, and ξ time constants
 [parameters.backend.filters.time_constants90]
 s = -5.0     # ERROR: Negative time constant
 n = -10000.0 # ERROR: Negative time constant
 xnr = -100.0 # ERROR: Negative time constant
 
-# SEM requires speech, noise, and ξ_smooth priors
+# SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
 [parameters.backend.priors.speech]
 mean = 80.0
 precision = -1.0 # ERROR: Negative precision
@@ -48,16 +46,10 @@ precision = -1.0 # ERROR: Negative precision
 mean = 70.0
 precision = -1.0 # ERROR: Negative precision
 
-[parameters.backend.priors.xnr_smooth]
-mean = 0.0
-precision = -1.0 # ERROR: Negative precision
-
 [parameters.backend.gain]
-slope = -1.0     # ERROR: Negative slope
 threshold = 12.0
 
 [parameters.backend.switch]
-slope = -8.0    # ERROR: Negative slope
 threshold = 4.0
 
 [metadata]

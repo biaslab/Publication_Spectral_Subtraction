@@ -248,7 +248,7 @@ Module parameters for SEM algorithm.
 
   - `speech::SourceParameters{T}`: Speech source parameters
   - `noise::SourceParameters{T}`: Noise source parameters
-  - `ξ_smooth::SourceParameters{T}`: ξ_smooth source parameters
+  - `ξ::SourceParameters{T}`: ξ source parameters
   - `gain::GainParameters{T}`: Gain parameters
   - `vad::VADParameters{T}`: VAD parameters
   - `sampling_frequency::T`: Sampling frequency (Hz)
@@ -257,7 +257,7 @@ Module parameters for SEM algorithm.
 struct ModuleParameters{T <: AbstractFloat} <: AbstractSPMParameters
     speech::SourceParameters{T}
     noise::SourceParameters{T}
-    ξ_smooth::SourceParameters{T}
+    ξ::SourceParameters{T}
     gain::GainParameters{T}
     vad::VADParameters{T}
     sampling_frequency::T
@@ -266,7 +266,7 @@ struct ModuleParameters{T <: AbstractFloat} <: AbstractSPMParameters
     function ModuleParameters{T}(
         speech::SourceParameters{T},
         noise::SourceParameters{T},
-        ξ_smooth::SourceParameters{T},
+        ξ::SourceParameters{T},
         gain::GainParameters{T},
         vad::VADParameters{T},
         sampling_frequency::T,
@@ -275,7 +275,7 @@ struct ModuleParameters{T <: AbstractFloat} <: AbstractSPMParameters
         sampling_frequency > 0 ||
             throw(ArgumentError("Sampling frequency must be positive"))
         nbands > 0 || throw(ArgumentError("Number of bands must be positive"))
-        new{T}(speech, noise, ξ_smooth, gain, vad, sampling_frequency, nbands)
+        new{T}(speech, noise, ξ, gain, vad, sampling_frequency, nbands)
     end
 end
 
@@ -287,7 +287,7 @@ Common parameters for the SEM algorithm.
 # Fields
 
   - `inference::InferenceParameters`: Global inference configuration (iterations, autostart, free_energy)
-  - `modules::ModuleParameters{T}`: Per-module parameters for speech, noise, ξ_smooth, gain, vad, plus shared sampling_frequency and nbands
+  - `modules::ModuleParameters{T}`: Per-module parameters for speech, noise, ξ, gain, vad, plus shared sampling_frequency and nbands
 """
 struct SEMParameters{T <: AbstractFloat} <: AbstractSPMParameters
 
@@ -349,14 +349,14 @@ Container for all SEM algorithm states.
 
   - `speech::BLIState{T}`: Speech source state
   - `noise::BLIState{T}`: Noise source state
-  - `ξ_smooth::BLIState{T}`: Smoothed SNR state
+  - `ξ::SourceTransitionState{T}`: ξ transition state (only transition, no source state)
   - `gain::GainState{T}`: Gain state
   - `vad::VADState{T}`: vad state
 """
 struct SEMStates{T <: AbstractFloat} <: AbstractSPMStates
     speech::BLIState{T}
     noise::BLIState{T}
-    ξ_smooth::BLIState{T}
+    ξ::SourceTransitionState{T}
     gain::GainState{T}
     vad::VADState{T}
 
@@ -366,8 +366,6 @@ struct SEMStates{T <: AbstractFloat} <: AbstractSPMStates
         speech_prior_precision::T = T(1.0),
         noise_prior_mean::T = zero(T),
         noise_prior_precision::T = T(1.0),
-        ξ_smooth_prior_mean::T = zero(T),
-        ξ_smooth_prior_precision::T = T(1.0),
         gain_prior::Vector{T} = [T(0.5), T(0.5)],
         gain_auxiliary::Union{Vector{T}, Nothing} = nothing,
         gain_wiener_floor::Union{Vector{T}, Nothing} = nothing,
@@ -393,16 +391,12 @@ struct SEMStates{T <: AbstractFloat} <: AbstractSPMStates
             noise_prior_mean,
             noise_prior_precision,
         )
-        ξ_smooth = BLIState{T}(
-            params.modules.ξ_smooth,
-            nbands,
-            ξ_smooth_prior_mean,
-            ξ_smooth_prior_precision,
-        )
+        # ξ only has transition state, no source state
+        ξ = SourceTransitionState{T}(nbands, params.modules.ξ.λ)
         # Initialize gain and vad states using default or provided parameters
         gain = GainState{T}(nbands, gain_prior, gain_auxiliary, gain_wiener_floor)
         vad = VADState{T}(nbands, vad_prior, vad_auxiliary)
-        new{T}(speech, noise, ξ_smooth, gain, vad)
+        new{T}(speech, noise, ξ, gain, vad)
     end
 end
 
@@ -426,7 +420,7 @@ end
 # ============================================================================
 
 """
-    SEMBackend(params::SEMParameters{T}, speech_prior_mean::T, speech_prior_precision::T, noise_prior_mean::T, noise_prior_precision::T, ξ_smooth_prior_mean::T, ξ_smooth_prior_precision::T) -> SEMBackend{T}
+    SEMBackend(params::SEMParameters{T}, speech_prior_mean::T, speech_prior_precision::T, noise_prior_mean::T, noise_prior_precision::T) -> SEMBackend{T}
 
 Create a SEM backend with specified parameters and priors.
 
@@ -437,12 +431,13 @@ Create a SEM backend with specified parameters and priors.
   - `speech_prior_precision::T`: Prior precision for speech source (default: `T(1.0)`)
   - `noise_prior_mean::T`: Prior mean for noise source (default: `zero(T)`)
   - `noise_prior_precision::T`: Prior precision for noise source (default: `T(1.0)`)
-  - `ξ_smooth_prior_mean::T`: Prior mean for ξ_smooth source (default: `zero(T)`)
-  - `ξ_smooth_prior_precision::T`: Prior precision for ξ_smooth source (default: `T(1.0)`)
 
 # Returns
 
   - `SEMBackend{T}`: Initialized SEM backend
+
+# Note
+  - `ξ` does not require prior mean/precision as it only has transition state, not source state
 """
 function SEMBackend(
     params::SEMParameters{T},
@@ -450,8 +445,6 @@ function SEMBackend(
     speech_prior_precision::T = T(1.0),
     noise_prior_mean::T = zero(T),
     noise_prior_precision::T = T(1.0),
-    ξ_smooth_prior_mean::T = zero(T),
-    ξ_smooth_prior_precision::T = T(1.0),
 ) where {T <: AbstractFloat}
     states = SEMStates{T}(
         params,
@@ -459,8 +452,6 @@ function SEMBackend(
         speech_prior_precision,
         noise_prior_mean,
         noise_prior_precision,
-        ξ_smooth_prior_mean,
-        ξ_smooth_prior_precision,
     )
     return SEMBackend{T}(states, params)
 end

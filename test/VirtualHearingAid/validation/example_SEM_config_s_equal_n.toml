@@ -28,13 +28,13 @@ autostart = true
 free_energy = false
 iterations = 2
 
-# SEM requires speech, noise, and ξ_smooth time constants
+# SEM requires speech, noise, and ξ time constants
 [parameters.backend.filters.time_constants90]
 s = 10000.0 # ERROR: s == n (s should be < n)
 n = 10000.0 # Noise time constant (ms)
-xnr = 100.0 # ξ_smooth time constant (ms)
+xnr = 100.0 # ξ time constant (ms)
 
-# SEM requires speech, noise, and ξ_smooth priors
+# SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
 [parameters.backend.priors.speech]
 mean = 80.0
 precision = 1.0
@@ -43,16 +43,10 @@ precision = 1.0
 mean = 70.0
 precision = 1.0
 
-[parameters.backend.priors.xnr_smooth]
-mean = 0.0
-precision = 1.0
-
 [parameters.backend.gain]
-slope = 1.0
 threshold = 12.0
 
 [parameters.backend.switch]
-slope = 8.0
 threshold = 4.0
 
 [metadata]

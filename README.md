@@ -602,7 +602,7 @@ The following configurations were used for each hearing aid:
 [metadata]
 name = "Baseline Noise"
 author = "VirtualHearingAid"
-date = "2025-01-27"
+date = "02-12-2025"
 description = "Baseline noise evaluation - compares WFB-processed clean audio to WFB-processed noisy audio (worst case scenario)"
 
 ```
@@ -634,13 +634,11 @@ autostart = true
 free_energy = false
 iterations = 1
 
-# SEM requires speech, noise, and ξ_smooth time constants
 [parameters.backend.filters.time_constants90]
 s = 5.0    # Speech time constant (ms)
 n = 700.0  # Noise time constant (ms)
-xnr = 20.0 # ξ_smooth time constant (ms)
+xnr = 20.0 # ξ time constant (ms)
 
-# SEM requires speech, noise, and ξ_smooth priors
 [parameters.backend.priors.speech]
 mean = 80.0
 precision = 1.0
@@ -649,46 +647,16 @@ precision = 1.0
 mean = 80.0
 precision = 1.0
 
-[parameters.backend.priors.xnr_smooth]
-mean = 0.0
-precision = 1.0
-
-
 [parameters.backend.gain]
-slope = 1.0
 threshold = 12.0 #(GMIN)
 
 [parameters.backend.switch]
-slope = 1.0
 threshold = 2.0
 
 [metadata]
 author = "VirtualHearingAid"
-date = "2025-01-27"
+date = "02-12-2025"
 description = "SEM Hearing Aid configuration"
 name = "SEM"
 
 ```
-
-## Related Documentation
-
-- **HADatasets**: See `dependencies/HADatasets/README.md` for dataset and metrics details
-- **VirtualHearingAid**: See `dependencies/VirtualHearingAid/README.md` for hearing aid processing
-- **Evaluation Scripts**: See `scripts/README.md` for detailed script documentation
-
-## Citation
-
-If you use this framework in your research, please cite:
-
-- **VOICEBANK_DEMAND Dataset**: See `dependencies/HADatasets/README.md` for citation
-- **DNSMOS Metrics**: See `dependencies/HADatasets/README.md` for citation
-- **VirtualHearingAid**: See `dependencies/VirtualHearingAid/README.md` for citation
-
-## License
-
-**Proprietary and Confidential**
-
-This repository and all of its contents, including the underlying algorithms, are proprietary and confidential trade secrets of GN.
-
-Access and use are restricted to authorized Biaslab personnel under the terms of the internal agreement with GN. Any unauthorized use, reproduction, distribution, or disclosure of this material is strictly prohibited.
-

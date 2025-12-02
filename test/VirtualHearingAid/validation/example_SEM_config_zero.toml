@@ -6,8 +6,6 @@
 # - Zero time constant: n = 0.0
 # - Zero precision (speech): precision = 0.0
 # - Zero precision (noise): precision = 0.0
-# - Zero gain slope: slope = 0.0
-# - Zero switch slope: slope = 0.0
 
 [parameters.hearingaid]
 name = "SEM Hearing Aid"
@@ -33,13 +31,13 @@ autostart = true
 free_energy = false
 iterations = 2
 
-# SEM requires speech, noise, and ξ_smooth time constants
+# SEM requires speech, noise, and ξ time constants
 [parameters.backend.filters.time_constants90]
 s = 0.0   # ERROR: Zero time constant
 n = 0.0   # ERROR: Zero time constant
 xnr = 0.0 # ERROR: Zero time constant
 
-# SEM requires speech, noise, and ξ_smooth priors
+# SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
 [parameters.backend.priors.speech]
 mean = 80.0
 precision = 0.0 # ERROR: Zero precision
@@ -48,16 +46,10 @@ precision = 0.0 # ERROR: Zero precision
 mean = 70.0
 precision = 0.0 # ERROR: Zero precision
 
-[parameters.backend.priors.xnr_smooth]
-mean = 0.0
-precision = 0.0 # ERROR: Zero precision
-
 [parameters.backend.gain]
-slope = 0.0      # ERROR: Zero slope
 threshold = 12.0
 
 [parameters.backend.switch]
-slope = 0.0     # ERROR: Zero slope
 threshold = 4.0
 
 [metadata]

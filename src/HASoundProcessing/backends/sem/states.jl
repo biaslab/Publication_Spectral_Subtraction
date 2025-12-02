@@ -82,10 +82,10 @@ Supports:
 
   - `:speech` - updates speech transition precision
   - `:noise` - updates noise transition precision
-  - `:ξ_smooth` - updates ξ_smooth transition precision
+  - `:ξ` - updates ξ transition precision
   - `:τs` - alias for `:speech`
   - `:τn` - alias for `:noise`
-  - `:τξ` - alias for `:ξ_smooth`
+  - `:τξ` - alias for `:ξ`
 """
 function update_transition!(
     backend::SEMBackend{T},
@@ -99,14 +99,14 @@ function update_transition!(
     elseif S === :τn
         update_transition!(backend.states.noise, precision, band)
     elseif S === :τξ
-        update_transition!(backend.states.ξ_smooth, precision, band)
-    elseif S === :speech || S === :noise || S === :ξ_smooth
+        update_transition!(backend.states.ξ, precision, band)
+    elseif S === :speech || S === :noise || S === :ξ
         source = getproperty(backend.states, S)
         update_transition!(source, precision, band)
     else
         throw(
             ArgumentError(
-                "Unknown transition state: $S. Use :speech, :noise, :ξ_smooth, :τs, :τn, or :τξ",
+                "Unknown transition state: $S. Use :speech, :noise, :ξ, :τs, :τn, or :τξ",
             ),
         )
     end
@@ -157,7 +157,7 @@ function update_state!(
     elseif S === :τn
         update_transition!(backend.states.noise, value, band)
     elseif S === :τξ
-        update_transition!(backend.states.ξ_smooth, value, band)
+        update_transition!(backend.states.ξ, value, band)
     else
         throw(
             ArgumentError("Unknown state: $S. Use :switch, :gain, :vad, :τs, :τn, or :τξ"),
@@ -195,6 +195,13 @@ function get_transition_precision(
     return source.transition.precision[band]
 end
 
+function get_transition_precision(
+    transition::SourceTransitionState{T},
+    band::Int,
+) where {T <: AbstractFloat}
+    return transition.precision[band]
+end
+
 
 function get_gain_auxiliary(
     backend::SEMBackend{T},
@@ -209,11 +216,6 @@ function get_vad_auxiliary(
     band::Int,
 ) where {T <: AbstractFloat}
     return backend.states.vad.auxiliary[band]
-end
-
-
-function get_vad_slope_dB(backend::SEMBackend{T}) where {T <: AbstractFloat}
-    return backend.params.modules.vad.slope_dB
 end
 
 

@@ -10,10 +10,8 @@
 # - s >= n: s = 20000.0, n = 10000.0 (s should be < n)
 # - Integer instead of float: prior mean and precision
 # - Negative precision: precision = -1.0
-# - Integer instead of float: gain slope and threshold
-# - Negative/zero slope: gain slope = -1.0
-# - Integer instead of float: switch slope and threshold
-# - Zero slope: switch slope = 0.0
+# - Integer instead of float: gain threshold
+# - Integer instead of float: switch threshold
 
 [parameters.hearingaid]
 name = "SEM Hearing Aid"
@@ -39,14 +37,14 @@ autostart = "true" # ERROR: String instead of Bool
 free_energy = 0    # ERROR: Integer instead of Bool
 iterations = 2.5   # ERROR: Float instead of Integer
 
-# SEM requires speech, noise, and ξ_smooth time constants
+# SEM requires speech, noise, and ξ time constants
 [parameters.backend.filters.time_constants90]
 s = 5     # ERROR: Integer instead of Float (also will be negative in another test)
 n = 10000 # ERROR: Integer instead of Float
 xnr = 100 # ERROR: Integer instead of Float
 # Also test: s = -5.0 (negative), s = 20000.0 >= n = 10000.0 (invalid relationship)
 
-# SEM requires speech, noise, and ξ_smooth priors
+# SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
 [parameters.backend.priors.speech]
 mean = 80     # ERROR: Integer instead of Float
 precision = 1 # ERROR: Integer instead of Float
@@ -56,19 +54,11 @@ precision = 1 # ERROR: Integer instead of Float
 mean = 70     # ERROR: Integer instead of Float
 precision = 1 # ERROR: Integer instead of Float
 
-[parameters.backend.priors.xnr_smooth]
-mean = 0      # ERROR: Integer instead of Float
-precision = 1 # ERROR: Integer instead of Float
-
 [parameters.backend.gain]
-slope = 1      # ERROR: Integer instead of Float
 threshold = 12 # ERROR: Integer instead of Float
-# Also test: slope = -1.0 (negative), slope = 0.0 (zero)
 
 [parameters.backend.switch]
-slope = 8     # ERROR: Integer instead of Float
 threshold = 4 # ERROR: Integer instead of Float
-# Also test: slope = 0.0 (zero), slope = -8.0 (negative)
 
 [metadata]
 author = "VirtualHearingAid"

@@ -178,7 +178,7 @@ function validate_sem_config(config::AbstractDict)
     nbands = config["parameters"]["frontend"]["nbands"]
     tc_config = config["parameters"]["backend"]["filters"]["time_constants90"]
 
-    # SEM requires speech (s), noise (n), and ξ_smooth (xnr) time constants
+    # SEM requires speech (s), noise (n), and ξ (xnr) time constants
     required_tc_fields = ["s", "n", "xnr"]
     validate_time_constants(tc_config, nbands, required_tc_fields)
 
@@ -281,8 +281,8 @@ function validate_sem_config(config::AbstractDict)
     haskey(config["parameters"]["backend"], "priors") ||
         throw(ArgumentError("Missing 'priors' in backend parameters"))
 
-    # SEM requires speech, noise, and xnr_smooth priors
-    required_priors = ["speech", "noise", "xnr_smooth"]
+    # SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
+    required_priors = ["speech", "noise"]
     for prior_name in required_priors
         haskey(config["parameters"]["backend"]["priors"], prior_name) ||
             throw(ArgumentError("Missing required prior '$prior_name' in priors"))
@@ -324,22 +324,8 @@ function validate_sem_config(config::AbstractDict)
         throw(ArgumentError("Missing 'gain' in backend parameters"))
 
     gain_config = config["parameters"]["backend"]["gain"]
-    haskey(gain_config, "slope") ||
-        throw(ArgumentError("Missing 'slope' in gain parameters"))
     haskey(gain_config, "threshold") ||
         throw(ArgumentError("Missing 'threshold' in gain parameters"))
-
-    # Validate gain slope is a Float and > 0
-    if !(gain_config["slope"] isa AbstractFloat)
-        throw(
-            ArgumentError(
-                "Gain slope must be a Float, got $(typeof(gain_config["slope"]))",
-            ),
-        )
-    end
-    if gain_config["slope"] <= 0
-        throw(ArgumentError("Gain slope=$(gain_config["slope"]) must be greater than zero"))
-    end
 
     # Validate gain threshold is a Float
     if !(gain_config["threshold"] isa AbstractFloat)
@@ -354,26 +340,8 @@ function validate_sem_config(config::AbstractDict)
         throw(ArgumentError("Missing 'switch' in backend parameters"))
 
     switch_config = config["parameters"]["backend"]["switch"]
-    haskey(switch_config, "slope") ||
-        throw(ArgumentError("Missing 'slope' in switch parameters"))
     haskey(switch_config, "threshold") ||
         throw(ArgumentError("Missing 'threshold' in switch parameters"))
-
-    # Validate switch slope is a Float and > 0
-    if !(switch_config["slope"] isa AbstractFloat)
-        throw(
-            ArgumentError(
-                "Switch slope must be a Float, got $(typeof(switch_config["slope"]))",
-            ),
-        )
-    end
-    if switch_config["slope"] <= 0
-        throw(
-            ArgumentError(
-                "Switch slope=$(switch_config["slope"]) must be greater than zero",
-            ),
-        )
-    end
 
     # Validate switch threshold is a Float
     if !(switch_config["threshold"] isa AbstractFloat)

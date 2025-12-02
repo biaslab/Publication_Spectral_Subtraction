@@ -34,6 +34,7 @@ using CSV
 using DataFrames
 using Dates
 using Logging
+using Statistics
 using TOML
 using WAV
 using Experiments
@@ -381,7 +382,7 @@ function create_overall_summary_table(df::DataFrame, metrics::Vector{String})::D
         end
     end
     
-    return DataFrame([row_data])
+    return DataFrame(row_data)
 end
 
 """

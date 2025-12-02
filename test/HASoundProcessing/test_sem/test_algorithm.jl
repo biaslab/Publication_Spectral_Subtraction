@@ -19,7 +19,6 @@
         get_speech,
         get_noise,
         get_vad,
-        get_vad_slope_dB,
         get_vad_threshold_dB,
         get_gain_threshold_dB,
         get_gain_threshold_lin,
@@ -57,13 +56,13 @@
                     "time_constants90" => Dict(
                         "s" => 5.0,    # Speech time constant
                         "n" => 700.0,  # Noise time constant
-                        "ξ_smooth" => 200.0, # ξ_smooth time constant
+                        "ξ" => 200.0, # ξ time constant
                     ),
                 ),
                 "priors" => Dict(
                     "speech" => Dict("mean" => 80.0, "precision" => 1.0),
                     "noise" => Dict("mean" => 80.0, "precision" => 1.0),
-                    "ξ_smooth" => Dict("mean" => 0.0, "precision" => 1.0),
+                    "ξ" => Dict("mean" => 0.0, "precision" => 1.0),
                 ),
             ),
         ),
@@ -81,7 +80,7 @@
     tc_config = config["parameters"]["backend"]["filters"]["time_constants90"]
     τs = T(tc_config["s"])
     τn = T(tc_config["n"])
-    τξ = T(tc_config["ξ_smooth"])
+    τξ = T(tc_config["ξ"])
 
     # Get prior parameters
     priors_config = config["parameters"]["backend"]["priors"]
@@ -89,13 +88,12 @@
     speech_precision = T(priors_config["speech"]["precision"])
     noise_mean = T(priors_config["noise"]["mean"])
     noise_precision = T(priors_config["noise"]["precision"])
-    ξ_smooth_mean = T(priors_config["ξ_smooth"]["mean"])
-    ξ_smooth_precision = T(priors_config["ξ_smooth"]["precision"])
+    # ξ does not require prior mean/precision as it only has transition state
 
     # Create source parameters (no concentration parameter)
     speech_params = SourceParameters{T}(τs, fs_algorithm)
     noise_params = SourceParameters{T}(τn, fs_algorithm)
-    ξ_smooth_params = SourceParameters{T}(τξ, fs_algorithm)
+    ξ_params = SourceParameters{T}(τξ, fs_algorithm)
 
     # Create gain and vad parameters (using defaults for slope, gmin for gain threshold)
     gain_params = GainParameters{T}(T(1.0), gmin)  # slope_dB=1.0, threshold_dB=gmin
@@ -105,7 +103,7 @@
     module_params = ModuleParameters{T}(
         speech_params,
         noise_params,
-        ξ_smooth_params,
+        ξ_params,
         gain_params,
         vad_params,
         fs_algorithm,
@@ -125,8 +123,6 @@
         speech_precision,
         noise_mean,
         noise_precision,
-        ξ_smooth_mean,
-        ξ_smooth_precision,
     )
 
     @testset "Construction" begin
@@ -171,8 +167,8 @@
             @test sem_backend.params.modules.noise.τ90 == τn
             @test sem_backend.params.modules.noise.sampling_frequency == fs_algorithm
 
-            @test sem_backend.params.modules.ξ_smooth.τ90 == τξ
-            @test sem_backend.params.modules.ξ_smooth.sampling_frequency == fs_algorithm
+            @test sem_backend.params.modules.ξ.τ90 == τξ
+            @test sem_backend.params.modules.ξ.sampling_frequency == fs_algorithm
         end
 
         @testset "Source State Initialization" begin
@@ -232,7 +228,7 @@
     @testset "Constants Validation" begin
         @testset "SEM Constants" begin
             # Test SEM_SOURCE_FIELDS
-            @test SEM_SOURCE_FIELDS == (:speech, :noise, :ξ_smooth)
+            @test SEM_SOURCE_FIELDS == (:speech, :noise, :ξ)
             @test all(
                 field in fieldnames(typeof(sem_backend.states)) for
                 field in SEM_SOURCE_FIELDS
@@ -312,7 +308,7 @@
             single_band_module_params = ModuleParameters{T}(
                 speech_params,
                 noise_params,
-                ξ_smooth_params,
+                ξ_params,
                 gain_params,
                 vad_params,
                 fs_algorithm,
@@ -329,8 +325,6 @@
                 speech_precision,
                 noise_mean,
                 noise_precision,
-                ξ_smooth_mean,
-                ξ_smooth_precision,
             )
 
             @test length(single_band_sem.states.gain.p) == 1
@@ -475,7 +469,7 @@
                 @test_throws ArgumentError ModuleParameters{T}(
                     speech_params,
                     noise_params,
-                    ξ_smooth_params,
+                    ξ_params,
                     gain_params,
                     vad_params,
                     T(-1.0),  # Invalid
@@ -484,7 +478,7 @@
                 @test_throws ArgumentError ModuleParameters{T}(
                     speech_params,
                     noise_params,
-                    ξ_smooth_params,
+                    ξ_params,
                     gain_params,
                     vad_params,
                     T(0.0),  # Invalid
@@ -501,7 +495,7 @@
                 @test_throws ArgumentError ModuleParameters{T}(
                     speech_params,
                     noise_params,
-                    ξ_smooth_params,
+                    ξ_params,
                     gain_params,
                     vad_params,
                     fs_algorithm,
@@ -605,13 +599,13 @@
             # Restore
             update_transition!(sem_backend, Val(:speech), original_precision, 1)
 
-            # Test ξ_smooth transition update
-            ξ_smooth = sem_backend.states.ξ_smooth
-            original_τξ = ξ_smooth.transition.precision[1]
+            # Test ξ transition update
+            ξ = sem_backend.states.ξ
+            original_τξ = ξ.precision[1]
             new_τξ = T(3.0)
 
             update_transition!(sem_backend, Val(:τξ), new_τξ, 1)
-            @test sem_backend.states.ξ_smooth.transition.precision[1] == new_τξ
+            @test sem_backend.states.ξ.precision[1] == new_τξ
             # Restore
             update_transition!(sem_backend, Val(:τξ), original_τξ, 1)
         end

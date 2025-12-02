@@ -31,14 +31,10 @@ function infer_SEM_filtering(
     noise_mean = get_source_mean(backend.states.noise, band)
     noise_precision = get_source_precision(backend.states.noise, band)
 
-    ξ_mean = get_source_mean(backend.states.ξ_smooth, band)
-    ξ_precision = get_source_precision(backend.states.ξ_smooth, band)
-
-    τξ = get_transition_precision(backend.states.ξ_smooth, band)
+    τξ = get_transition_precision(backend.states.ξ, band)
     τs = get_transition_precision(backend.states.speech, band)
     τn = get_transition_precision(backend.states.noise, band)
 
-    η = get_vad_slope_dB(backend)
     κ = get_vad_threshold_dB(backend)
     θ = get_gain_threshold_dB(backend)
 
@@ -47,7 +43,6 @@ function infer_SEM_filtering(
         q(s) = NormalMeanPrecision(speech_mean, speech_precision)
         q(n) = NormalMeanPrecision(noise_mean, noise_precision)
         q(ξ) = NormalMeanPrecision(0.0, 1.0)
-        q(ξ_smooth) = NormalMeanPrecision(ξ_mean, ξ_precision)
         q(ζ_switch) = PointMass(get_vad_auxiliary(backend, band))
         q(ζ_gain) = PointMass(get_gain_auxiliary(backend, band))
         q(π_switch) =
@@ -57,8 +52,7 @@ function infer_SEM_filtering(
     end
 
     constraints = @constraints begin
-        q(s, n, ξ_smooth, ξ, ζ_switch, ζ_gain, π_switch, w) =
-            q(s)q(n)q(ξ_smooth)q(ξ)q(ζ_switch)q(ζ_gain)q(π_switch)q(w)
+        q(s, n, ξ, ζ_switch, ζ_gain, π_switch, w) = MeanField()
 
         for q in random_w_model
             q(x_prior, x) = q(x_prior, x)
@@ -69,11 +63,10 @@ function infer_SEM_filtering(
     autoupdates = @autoupdates begin
         μs_prior, τs_prior = mean_precision(q(s))
         μn_prior, τn_prior = mean_precision(q(n))
-        μξ_mean, τξ_mean = mean_precision(q(ξ_smooth))
     end
 
     rxengine = infer(
-        model = SEM_filtering_model(τs = τs, τn = τn, η = η, κ = κ, θ = θ, τξ = τξ),
+        model = SEM_filtering_model(τs = τs, τn = τn, κ = κ, θ = θ, τξ = τξ),
         data = (y = data,),
         initialization = initialization,
         keephistory = length(data),
@@ -83,7 +76,6 @@ function infer_SEM_filtering(
             s = KeepLast(),
             n = KeepLast(),
             ξ = KeepLast(),
-            ξ_smooth = KeepLast(),
             π_switch = KeepLast(),
             w = KeepLast(),
         ),

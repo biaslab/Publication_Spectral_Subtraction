@@ -27,7 +27,7 @@ end
 Initialize SEM backend from configuration.
 
 Creates a SEMBackend with parameters extracted from the configuration dictionary.
-SEM requires speech, noise, and ξ_smooth (xnr) parameters; context and VAI fields are ignored
+SEM requires speech, noise, and ξ (xnr) parameters; context and VAI fields are ignored
 for backward compatibility.
 
 # Arguments
@@ -77,21 +77,16 @@ function init_backend(::Type{SEMBackend}, config::AbstractDict)
     speech_precision = T(priors_config["speech"]["precision"])
     noise_mean = T(priors_config["noise"]["mean"])
     noise_precision = T(priors_config["noise"]["precision"])
-    ξ_smooth_mean = T(priors_config["xnr_smooth"]["mean"])
-    ξ_smooth_precision = T(priors_config["xnr_smooth"]["precision"])
+    # ξ does not require prior mean/precision as it only has transition state
 
-    gain_slope =
-        haskey(config["parameters"]["backend"], "gain") &&
-        haskey(config["parameters"]["backend"]["gain"], "slope") ?
-        T(config["parameters"]["backend"]["gain"]["slope"]) : T(1.0)
+    # Gain slope is no longer used, use default value
+    gain_slope = T(1.0)
     gain_threshold =
         haskey(config["parameters"]["backend"], "gain") &&
         haskey(config["parameters"]["backend"]["gain"], "threshold") ?
         T(config["parameters"]["backend"]["gain"]["threshold"]) : T(12.0)
-    switch_slope =
-        haskey(config["parameters"]["backend"], "switch") &&
-        haskey(config["parameters"]["backend"]["switch"], "slope") ?
-        T(config["parameters"]["backend"]["switch"]["slope"]) : T(1.0)
+    # VAD slope is no longer used (η removed), use default value
+    switch_slope = T(1.0)
     switch_threshold =
         haskey(config["parameters"]["backend"], "switch") &&
         haskey(config["parameters"]["backend"]["switch"], "threshold") ?
@@ -99,7 +94,7 @@ function init_backend(::Type{SEMBackend}, config::AbstractDict)
 
     speech_params = SourceParameters{T}(τs, fs_algorithm)
     noise_params = SourceParameters{T}(τn, fs_algorithm)
-    ξ_smooth_params = SourceParameters{T}(τξ, fs_algorithm)
+    ξ_params = SourceParameters{T}(τξ, fs_algorithm)
 
     # Note: gain_threshold should be in dB, and GainParameters will convert it
     # Use gain.threshold (defaults to 12.0 dB if not specified)
@@ -111,7 +106,7 @@ function init_backend(::Type{SEMBackend}, config::AbstractDict)
     module_params = HASoundProcessing.SEM.ModuleParameters{T}(
         speech_params,
         noise_params,
-        ξ_smooth_params,
+        ξ_params,
         gain_params,
         vad_params,
         fs_algorithm,
@@ -131,8 +126,6 @@ function init_backend(::Type{SEMBackend}, config::AbstractDict)
         speech_precision,
         noise_mean,
         noise_precision,
-        ξ_smooth_mean,
-        ξ_smooth_precision,
     )
     return backend
 end

@@ -134,7 +134,7 @@
             @test hasfield(typeof(ha.backend.params.modules), :sampling_frequency)
             @test hasfield(typeof(ha.backend.params.modules), :speech)
             @test hasfield(typeof(ha.backend.params.modules), :vad)
-            @test hasfield(typeof(ha.backend.params.modules), :ξ_smooth)
+            @test hasfield(typeof(ha.backend.params.modules), :ξ)
             @test ha.backend.params.modules.nbands ==
                   config["parameters"]["frontend"]["nbands"]
 
@@ -142,8 +142,8 @@
             @test hasfield(typeof(ha.backend.params.modules.gain), :slope_dB)
             @test hasfield(typeof(ha.backend.params.modules.gain), :threshold_dB)
             @test hasfield(typeof(ha.backend.params.modules.gain), :threshold_lin)
-            @test ha.backend.params.modules.gain.slope_dB ==
-                  config["parameters"]["backend"]["gain"]["slope"]
+            # slope_dB is no longer read from config, uses default value of 1.0
+            @test ha.backend.params.modules.gain.slope_dB == 1.0
 
             threshold_dB_ = config["parameters"]["backend"]["gain"]["threshold"]
             threshold_lin = 10^(-threshold_dB_ / 20.0)
@@ -172,8 +172,8 @@
             # Test vad module structure
             @test hasfield(typeof(ha.backend.params.modules.vad), :slope_dB)
             @test hasfield(typeof(ha.backend.params.modules.vad), :threshold_dB)
-            @test ha.backend.params.modules.vad.slope_dB ==
-                  config["parameters"]["backend"]["switch"]["slope"]
+            # slope_dB is no longer read from config, uses default value of 1.0
+            @test ha.backend.params.modules.vad.slope_dB == 1.0
             @test ha.backend.params.modules.vad.threshold_dB ==
                   config["parameters"]["backend"]["switch"]["threshold"]
 
@@ -184,15 +184,15 @@
             @test ha.backend.params.modules.speech.sampling_frequency ≈ expected_fs
             @test ha.backend.params.modules.noise.sampling_frequency ≈ expected_fs
 
-            # Test ξ_smooth module structure
-            @test hasfield(typeof(ha.backend.params.modules.ξ_smooth), :fc)
-            @test hasfield(typeof(ha.backend.params.modules.ξ_smooth), :sampling_frequency)
-            @test hasfield(typeof(ha.backend.params.modules.ξ_smooth), :λ)
-            @test hasfield(typeof(ha.backend.params.modules.ξ_smooth), :τ90)
+            # Test ξ module structure
+            @test hasfield(typeof(ha.backend.params.modules.ξ), :fc)
+            @test hasfield(typeof(ha.backend.params.modules.ξ), :sampling_frequency)
+            @test hasfield(typeof(ha.backend.params.modules.ξ), :λ)
+            @test hasfield(typeof(ha.backend.params.modules.ξ), :τ90)
             expected_τxnr =
                 config["parameters"]["backend"]["filters"]["time_constants90"]["xnr"]
-            @test ha.backend.params.modules.ξ_smooth.τ90 ≈ expected_τxnr
-            @test ha.backend.params.modules.ξ_smooth.sampling_frequency ≈ expected_fs
+            @test ha.backend.params.modules.ξ.τ90 ≈ expected_τxnr
+            @test ha.backend.params.modules.ξ.sampling_frequency ≈ expected_fs
         end
     end
 end

@@ -131,7 +131,7 @@ end
 
 
 # SEM specific constants
-const SEM_SOURCE_FIELDS = (:speech, :noise, :ξ_smooth)
+const SEM_SOURCE_FIELDS = (:speech, :noise, :ξ)
 const SEM_STATE_FIELDS = (:gain, :vad)
 
 # Export all functions

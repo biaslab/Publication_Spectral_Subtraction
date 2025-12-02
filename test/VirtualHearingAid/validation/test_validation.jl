@@ -347,34 +347,6 @@
             end
         end
 
-        # Test gain slope not a float
-        @testset "Gain Slope Not Float" begin
-            correct_config =
-                TOML.parsefile(joinpath(test_dir, "example_SEM_config_correct.toml"))
-
-
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["gain"]["slope"] = 1
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
-        end
-
-        # Test gain slope <= 0
-        @testset "Gain Slope <= 0" begin
-            correct_config =
-                TOML.parsefile(joinpath(test_dir, "example_SEM_config_correct.toml"))
-
-
-            # slope = 0
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["gain"]["slope"] = 0.0
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
-
-            # slope < 0
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["gain"]["slope"] = -1.0
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
-        end
-
         # Test gain threshold not a float
         @testset "Gain Threshold Not Float" begin
             correct_config =
@@ -407,34 +379,6 @@
                 delete!(config["parameters"]["backend"]["switch"], field)
                 @test_throws ArgumentError validate_config(SEMHearingAid, config)
             end
-        end
-
-        # Test switch slope not a float
-        @testset "Switch Slope Not Float" begin
-            correct_config =
-                TOML.parsefile(joinpath(test_dir, "example_SEM_config_correct.toml"))
-
-
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["switch"]["slope"] = 8
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
-        end
-
-        # Test switch slope <= 0
-        @testset "Switch Slope <= 0" begin
-            correct_config =
-                TOML.parsefile(joinpath(test_dir, "example_SEM_config_correct.toml"))
-
-
-            # slope = 0
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["switch"]["slope"] = 0.0
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
-
-            # slope < 0
-            config = deepcopy(correct_config)
-            config["parameters"]["backend"]["switch"]["slope"] = -8.0
-            @test_throws ArgumentError validate_config(SEMHearingAid, config)
         end
 
         # Test switch threshold not a float

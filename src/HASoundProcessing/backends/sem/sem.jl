@@ -32,7 +32,6 @@ export SEM_filtering_model
 export update_state!, update_transition!
 export get_source_mean, get_source_precision, get_transition_precision
 export get_gain_auxiliary, get_vad_auxiliary
-export get_vad_slope_dB,
-    get_vad_threshold_dB, get_gain_threshold_dB,
+export get_vad_threshold_dB, get_gain_threshold_dB,
     get_gain_threshold_lin, get_gain_slope_dB
 end # module
