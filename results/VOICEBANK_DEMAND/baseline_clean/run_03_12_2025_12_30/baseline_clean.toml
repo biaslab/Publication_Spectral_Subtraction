@@ -1,0 +1,9 @@
+# Baseline Clean Configuration
+# This configuration is used for baseline "best" evaluation (clean vs clean)
+
+[metadata]
+name = "Baseline Clean"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline clean evaluation - compares WFB-processed clean audio to itself (best case scenario)"
+

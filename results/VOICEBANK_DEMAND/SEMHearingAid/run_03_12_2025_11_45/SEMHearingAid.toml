@@ -1,0 +1,49 @@
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 1
+
+[parameters.backend.filters.time_constants90]
+s = 5.0    # Speech time constant (ms)
+n = 700.0  # Noise time constant (ms)
+xnr = 20.0 # ξ time constant (ms)
+
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.priors.noise]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.gain]
+threshold = 12.0 #(GMIN)
+
+[parameters.backend.switch]
+threshold = 2.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "03-12-2025"
+description = "SEM Hearing Aid configuration"
+name = "SEM"
+

@@ -1,0 +1,9 @@
+# Baseline Noise Configuration
+# This configuration is used for baseline "worst" evaluation (clean vs noisy)
+
+[metadata]
+name = "Baseline Noise"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline noise evaluation - compares WFB-processed clean audio to WFB-processed noisy audio (worst case scenario)"
+
