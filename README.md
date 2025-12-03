@@ -307,12 +307,6 @@ The WFB front-end provides perceptually-aligned frequency warping for consistent
 
 The input signal passes through a cascade of first-order all-pass filters, producing warped delay-line signals. A time-domain FIR structure with weights generates the output, while the warped signals are provided to the Spectral Enhancement Model for inference and synthesis.
 
-### Why WFB Preprocessing?
-
-1. **Consistency**: All hearing aids are evaluated on the same preprocessed baseline
-2. **PESQ Sensitivity**: PESQ is sensitive to frequency domain changes, so we need consistent WFB processing
-3. **Fair Comparison**: The WFB-processed clean audio serves as the reference for all evaluations
-4. **Baseline Processing**: BaselineHearingAid uses unity gains, so it only applies WFB warping without altering the signal
 
 ### Evaluation Pipeline
 
@@ -377,9 +371,7 @@ See existing configurations in `configurations/` for examples of the TOML struct
 ## Runtime and Hardware Requirements
 
 - **Tested on**: macOS / Linux, Julia 1.11+, Python 3.7+
-- **Typical runtime**: Full VOICEBANK_DEMAND test evaluation per device takes approximately 30-60 minutes on a modern CPU (4+ cores)
 - **GPU**: Not required. All models are CPU-friendly
-- **Memory**: Less than 4 GB RAM for the full test set evaluation
 - **Storage**: ~2 GB for the resampled dataset, ~4 GB for the WFB-processed dataset
 
 ## Troubleshooting
