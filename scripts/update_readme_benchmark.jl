@@ -226,7 +226,7 @@ function create_environment_snr_table(data_dict)
         device_data[device_name] = Dict{String, Dict{Float64, Dict{String, Float64}}}()
         
         for row in eachrow(df)
-            env = row.Environment
+            env = row.environment
             snr = row.SNR
             if !haskey(device_data[device_name], env)
                 device_data[device_name][env] = Dict{Float64, Dict{String, Float64}}()

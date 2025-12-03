@@ -5,6 +5,7 @@
         SEMStates,
         SourceParameters,
         SourceState,
+        SourceTransitionState,
         BLIState,
         VADState,
         GainState,
@@ -175,10 +176,17 @@
             # Test that all sources are properly initialized
             for source_name in SEM_SOURCE_FIELDS
                 source = getfield(sem_backend.states, source_name)
-                @test source isa BLIState{T}
-                @test length(source.state.mean) == nbands
-                @test length(source.state.precision) == nbands
-                @test length(source.transition.precision) == nbands
+                if source_name === :ξ
+                    # ξ is a SourceTransitionState, not a BLIState
+                    @test source isa SourceTransitionState{T}
+                    @test length(source.precision) == nbands
+                else
+                    # speech and noise are BLIState
+                    @test source isa BLIState{T}
+                    @test length(source.state.mean) == nbands
+                    @test length(source.state.precision) == nbands
+                    @test length(source.transition.precision) == nbands
+                end
             end
         end
     end
@@ -216,10 +224,17 @@
             for field in SEM_SOURCE_FIELDS
                 @testset "$field" begin
                     source = getfield(sem_backend.states, field)
-                    @test source isa BLIState{T}
-                    @test length(source.state.mean) == nbands
-                    @test length(source.state.precision) == nbands
-                    @test length(source.transition.precision) == nbands
+                    if field === :ξ
+                        # ξ is a SourceTransitionState, not a BLIState
+                        @test source isa SourceTransitionState{T}
+                        @test length(source.precision) == nbands
+                    else
+                        # speech and noise are BLIState
+                        @test source isa BLIState{T}
+                        @test length(source.state.mean) == nbands
+                        @test length(source.state.precision) == nbands
+                        @test length(source.transition.precision) == nbands
+                    end
                 end
             end
         end
@@ -295,9 +310,15 @@
 
             for field in SEM_SOURCE_FIELDS
                 source = getfield(sem_backend.states, field)
-                @test typeof(source.state.mean) == Vector{T}
-                @test typeof(source.state.precision) == Vector{T}
-                @test typeof(source.transition.precision) == Vector{T}
+                if field === :ξ
+                    # ξ is a SourceTransitionState, only has precision
+                    @test typeof(source.precision) == Vector{T}
+                else
+                    # speech and noise are BLIState
+                    @test typeof(source.state.mean) == Vector{T}
+                    @test typeof(source.state.precision) == Vector{T}
+                    @test typeof(source.transition.precision) == Vector{T}
+                end
             end
         end
     end
@@ -337,9 +358,15 @@
 
             for field in SEM_SOURCE_FIELDS
                 source = getfield(single_band_sem.states, field)
-                @test length(source.state.mean) == 1
-                @test length(source.state.precision) == 1
-                @test length(source.transition.precision) == 1
+                if field === :ξ
+                    # ξ is a SourceTransitionState, only has precision
+                    @test length(source.precision) == 1
+                else
+                    # speech and noise are BLIState
+                    @test length(source.state.mean) == 1
+                    @test length(source.state.precision) == 1
+                    @test length(source.transition.precision) == 1
+                end
             end
         end
     end

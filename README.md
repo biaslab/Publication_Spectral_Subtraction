@@ -265,6 +265,54 @@ This script:
 
 The benchmark results are displayed in the [Benchmark Results](#benchmark-results) section below.
 
+## Evaluation Metrics
+
+This repository uses comprehensive speech quality assessment metrics to evaluate hearing aid algorithms. All metrics are computed using the HADatasets module, which provides standardized implementations of ITU-T and IEEE/ACM standards.
+
+### PESQ (Perceptual Evaluation of Speech Quality)
+
+- **Type**: Intrusive (requires reference signal)
+- **Scale**: 1-5 (higher is better)
+- **Standard**: ITU-T P.862.2
+- **Use Case**: Overall speech quality assessment
+- **Description**: PESQ is a perceptual metric that predicts the subjective quality of speech as perceived by human listeners. It compares the processed/enhanced audio to the clean reference signal and provides a score that correlates with Mean Opinion Score (MOS) ratings.
+
+**Important Note**: PESQ is sensitive to changes in the data or missing samples. This is why the evaluation pipeline uses WFB-processed clean audio as the reference, ensuring that both the processed output and reference have undergone the same WFB preprocessing for fair comparison.
+
+### DNSMOS (Deep Noise Suppression Mean Opinion Score)
+
+- **Type**: Non-intrusive (no reference required)
+- **Scale**: 1-5 (higher is better)
+- **Standard**: Microsoft DNS Challenge P.835
+- **Use Case**: Noise suppression quality assessment
+- **Description**: DNSMOS is a deep learning-based metric that predicts subjective quality scores without requiring a clean reference signal. It follows the ITU-T P.835 subjective test framework to measure three key quality dimensions.
+
+**P.835 Dimensions**:
+
+- **OVRL (Overall Quality)**: Overall audio quality assessment
+  - Measures the overall perceived quality of the processed audio
+  - Combines both speech and background noise quality perceptions
+
+- **SIG (Signal Quality)**: Speech quality assessment
+  - Focuses specifically on the quality of the speech signal
+  - Measures how natural and clear the speech sounds
+
+- **BAK (Background Quality)**: Background noise quality assessment
+  - Evaluates the quality of the background/noise component
+  - Measures how well noise is suppressed while preserving speech
+
+### Metric Selection Rationale
+
+The combination of PESQ and DNSMOS provides a comprehensive evaluation:
+
+- **PESQ** provides an intrusive reference-based assessment, giving a direct comparison to the clean signal
+- **DNSMOS** provides a non-intrusive assessment that doesn't require a reference, making it useful for real-world scenarios where clean references may not be available
+- The three DNSMOS dimensions (OVRL, SIG, BAK) provide detailed insights into different aspects of speech enhancement performance
+
+### Research Context
+
+This evaluation framework adopts the **ITU-T P.835 subjective test framework** to measure speech enhancement quality across multiple dimensions, enabling comprehensive assessment of hearing aid algorithms for monaural speech enhancement tasks.
+
 ## Directory Structure
 
 ```
@@ -293,7 +341,7 @@ Spectral_Subtraction/
 
 ### Speech Enhancement Module (SEM)
 
-The SEM follows introduced in the paper:
+The SEM follows the model introduced in the paper:
 
 ![SEM Factor Graph](figures/FFG_SEM.png)
 
@@ -388,7 +436,187 @@ See existing configurations in `configurations/` for examples of the TOML struct
 - **Checkpoint errors**: Manually merge existing checkpoints if needed
 - **Metrics errors**: Ensure Python dependencies are installed (see HADatasets README)
 
+## Optional Dependencies
+
+The metrics evaluation functionality relies on Python integration and the following optional dependencies:
+
+- **PyCall**: Python integration (for full metrics functionality)
+- **pesq**: Python PESQ implementation (MIT License)
+- **dnsmos_wrapper**: Custom wrapper for Microsoft DNSMOS (Creative Commons Attribution 4.0 International)
+
+These dependencies are automatically installed when running the Python installation script:
+```bash
+cd dependencies/HADatasets
+python install_python_deps.py
+```
+
+## Third-Party Licenses
+
+### Microsoft DNS-Challenge (DNSMOS submodule)
+
+Licensed under **Creative Commons Attribution 4.0 International**:
+
+- **Attribution Required**: Must give appropriate credit to Microsoft
+- **Commercial Use**: Allowed
+- **Modification**: Allowed
+- **Distribution**: Allowed
+
+## Citations
+
+### DNSMOS P.835
+
+```bibtex
+@inproceedings{reddy2022dnsmos,
+  title={DNSMOS P.835: A non-intrusive perceptual objective speech quality metric to evaluate noise suppressors},
+  author={Reddy, Chandan KA and Gopal, Vishak and Cutler, Ross},
+  booktitle={ICASSP 2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  year={2022},
+  organization={IEEE}
+}
+```
+
+### ICASSP 2023 Deep Noise Suppression Challenge
+
+```bibtex
+@inproceedings{dubey2023icassp,
+  title={ICASSP 2023 Deep Noise Suppression Challenge},
+  author={Dubey, Harishchandra and Aazami, Ashkan and Gopal, Vishak and Naderi, Babak and Braun, Sebastian and Cutler, Ross and Gamper, Hannes and Golestaneh, Mehrsa and Aichner, Robert},
+  booktitle={ICASSP},
+  year={2023}
+}
+```
+
+### VOICEBANK DEMAND Dataset
+
+```bibtex
+@misc{Valentini-Botinhao2017NoisySpeech,
+  author = {Valentini-Botinhao, Cassia},
+  title = {Noisy speech database for training speech enhancement algorithms and TTS models},
+  year = {2017},
+  howpublished = {Edinburgh DataShare},
+  doi = {10.7488/ds/2117},
+  url = {https://doi.org/10.7488/ds/2117}
+}
+```
+
+## Related Resources
+
+- **[ICASSP 2023 Deep Noise Suppression Challenge](https://www.microsoft.com/en-us/research/academic-program/deep-noise-suppression-challenge-icassp-2023/)**: Official challenge website and resources
+- **[DNSMOS Implementation](https://github.com/microsoft/DNS-Challenge)**: Microsoft's DNS Challenge repository with DNSMOS implementation
+- **[VoiceBank+Demand Dataset](https://datashare.ed.ac.uk/handle/10283/2791)**: Official dataset download page
+
 # Benchmark Results
+
+## Overview
+
+This section presents benchmark results comparing different hearing aid algorithms on the VOICEBANK_DEMAND dataset.
+
+## Overall Summary
+
+| Device | PESQ (1-5) | SIG (1-5) | BAK (1-5) | OVRL (1-5) |
+|---|---|---|---|---|
+| SEM | - | - | - | - |
+| baseline_clean | - | - | - | - |
+| baseline_noise | - | - | - | - |
+
+## Summary by Environment and SNR
+
+### BAK (1-5)
+
+### PESQ (1-5)
+
+### SIG (1-5)
+
+### OVRL (1-5)
+
+## Configuration Details
+
+The following configurations were used for each hearing aid:
+
+### SEM
+
+```toml
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 1
+
+[parameters.backend.filters.time_constants90]
+s = 5.0    # Speech time constant (ms)
+n = 700.0  # Noise time constant (ms)
+xnr = 20.0 # ξ time constant (ms)
+
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.priors.noise]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.gain]
+threshold = 12.0 #(GMIN)
+
+[parameters.backend.switch]
+threshold = 2.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "03-12-2025"
+description = "SEM Hearing Aid configuration"
+name = "SEM"
+
+```
+
+### baseline_clean
+
+```toml
+# Baseline Clean Configuration
+# This configuration is used for baseline "best" evaluation (clean vs clean)
+
+[metadata]
+name = "Baseline Clean"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline clean evaluation - compares WFB-processed clean audio to itself (best case scenario)"
+
+```
+
+### baseline_noise
+
+```toml
+# Baseline Noise Configuration
+# This configuration is used for baseline "worst" evaluation (clean vs noisy)
+
+[metadata]
+name = "Baseline Noise"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline noise evaluation - compares WFB-processed clean audio to WFB-processed noisy audio (worst case scenario)"
+
+```
+
+
+
 
 ## Overview
 
