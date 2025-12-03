@@ -22,13 +22,11 @@ autostart = true
 free_energy = false
 iterations = 1
 
-# SEM requires speech, noise, and ξ time constants
 [parameters.backend.filters.time_constants90]
 s = 5.0    # Speech time constant (ms)
 n = 700.0  # Noise time constant (ms)
 xnr = 20.0 # ξ time constant (ms)
 
-# SEM requires speech and noise priors (ξ does not need priors as it only has transition state)
 [parameters.backend.priors.speech]
 mean = 80.0
 precision = 1.0
@@ -45,7 +43,7 @@ threshold = 2.0
 
 [metadata]
 author = "VirtualHearingAid"
-date = "2025-01-27"
+date = "02-12-2025"
 description = "SEM Hearing Aid configuration"
 name = "SEM"
 
