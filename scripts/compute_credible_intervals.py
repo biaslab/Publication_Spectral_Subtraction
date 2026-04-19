@@ -4,13 +4,6 @@ Bayesian credible intervals for per-(system, environment, SNR) metric cells
 using a Student-t likelihood with weakly-informative priors, sampled via
 NUTS in NumPyro.
 
-Why Student-t rather than Normal? Per-cell PESQ/CSIG/CBAK/COVL distributions
-exhibit heavier-than-Normal tails, particularly at low SNR, where occasional
-catastrophic-failure files (e.g. babble overlapping with silent speech
-frames) pull the lower tail down. A Student-t likelihood with unknown
-degrees-of-freedom parameter absorbs such outliers without requiring data
-exclusion.
-
 Usage:
     python scripts/compute_credible_intervals.py \\
         --results-csv results/VOICEBANK_DEMAND/<run-dir>/results.csv \\
