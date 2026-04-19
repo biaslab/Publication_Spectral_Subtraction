@@ -1,7 +1,7 @@
 #!/usr/bin/env julia
 """
-Aggregate per-file PESQ + DNSMOS scores into the breakdowns reported in the
-paper's appendix:
+Aggregate per-file PESQ / CSIG / CBAK / COVL scores into the breakdowns reported
+in the paper's appendix:
 
   - overall summary               (one row per system)
   - by SNR                        (one row per (system, snr_db))

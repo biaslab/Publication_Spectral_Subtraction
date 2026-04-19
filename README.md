@@ -15,9 +15,8 @@ Tag `v1.1.0` on branch `revision-2026-ojsp` adds the material needed to reproduc
   - `AIDA2_thetauFBHearingAid/`, `AIDA2_thetaWFBHearingAid/` ($\theta$-only cells)
   - `SEM_uFBHearingAid/` (pure Wiener, uniform filter bank)
   - `SEM_litHearingAid/`, `SEM_lit_uFBHearingAid/` (full AIDA-2 at $\theta = 2.5$~dB, $\beta = 0.25$)
-- **Three analysis scripts** under `scripts/`:
+- **Two analysis scripts** under `scripts/`:
   - `compute_credible_intervals.py` — per-(system, environment, SNR) 95% credible intervals with a Student-$t$ likelihood, sampled via NUTS in NumPyro.
-  - `compute_noise_stationarity.jl` — per-environment noise log-power standard deviation computed from $n = y - x$.
   - `summarize_metrics.jl` — aggregates per-file scores into by-SNR and by-(environment, SNR) pivot tables.
 - **Composite metrics wrapper** `python_modules/composite_wrapper.py` for CSIG, CBAK, COVL (Hu & Loizou 2008), enabling the `--composite` flag on `run_evaluation.jl`.
 - **Canonical published run** under `results/VOICEBANK_DEMAND/ojsp_2026_factorial/` (`results.csv`, `credible_intervals.csv`, `run_metadata.toml`) — the exact numbers reported in the revised manuscript.
@@ -29,9 +28,8 @@ Canonical clamped values in the revised paper: $\theta = 2.5$~dB and $\beta = 0.
 This repository provides the complete implementation and evaluation framework for the spectral speech enhancement model presented in the paper. It includes:
 
 - **Implementation**: Full codebase for the Warped-Frequency Filter Bank (WFB) front-end and Speech Enhancement Model (SEM) backend
-- **Evaluation Pipeline**: Automated evaluation on the VOICEBANK_DEMAND dataset with comprehensive metrics (PESQ, DNSMOS)
+- **Evaluation Pipeline**: Automated evaluation on the VOICEBANK_DEMAND dataset with the composite metrics PESQ, CSIG, CBAK, and COVL (Hu \& Loizou 2008)
 - **Reproducibility**: All configurations and scripts needed to reproduce the results reported in the paper
-- **Benchmark Comparisons**: Automated generation of comparison tables 
 
 ## Overview
 
@@ -40,28 +38,11 @@ This repository provides a complete pipeline for:
 2. **WFB Preprocessing**: Create warped filter bank processed dataset for consistent evaluation
 3. **Evaluation**: Run evaluations for baseline and hearing aid algorithms using `run_evaluation.jl`
 4. **Results Analysis**: Generate summary tables and metrics organized by SNR and environment
-5. **Benchmark Results**: Automatically generate and update benchmark comparison tables in the README
-
-### Quick Start - View Benchmark Results
-
-The latest benchmark results comparing different hearing aid algorithms are automatically generated and displayed in the [Benchmark Results](#benchmark-results) section below. To update these results with the latest evaluation runs, simply run:
-
-```bash
-julia scripts/update_readme_benchmark.jl
-```
-
-This script automatically:
-- Finds the latest runs for each hearing aid (excluding Baseline_clean)
-- Generates comprehensive comparison tables for:
-  - Overall summary across all metrics
-  - Performance by SNR level (2.5, 7.5, 12.5, 17.5 dB)
-  - Performance by environment and SNR (bus, cafe, living, office, psquare)
-- Updates the README with the latest results and configuration details
 
 ## Prerequisites
 
 - **Julia 1.11+**: Required for all functionality
-- **Python 3.7+**: Required for metrics evaluation (PESQ, DNSMOS)
+- **Python 3.7+**: Required for metrics evaluation (PESQ, CSIG/CBAK/COVL; DNSMOS optional, legacy from v1.0.0)
 - **Git**: For cloning and submodule management
 
 ### Installation
