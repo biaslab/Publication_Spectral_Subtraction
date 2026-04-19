@@ -2,9 +2,27 @@
 
 This repository accompanies the paper:
 
-> M. Hidalgo-Araya *et al.*, "A Probabilistic Generative Model for Spectral Speech Enhancement", 2025.
+> M. Hidalgo-Araya *et al.*, "A Probabilistic Generative Model for Spectral Speech Enhancement", IEEE OJ-SP, 2026.
 
 A comprehensive evaluation framework for virtual hearing aids using the VOICEBANK_DEMAND dataset with warped filter bank (WFB) preprocessing.
+
+## Revision artifact — OJ-SP 2026 (tag `v1.1.0`, branch `revision-2026-ojsp`)
+
+Tag `v1.1.0` on branch `revision-2026-ojsp` adds the material needed to reproduce the IEEE OJ-SP 2026 revision on top of the original `v1.0.0` release:
+
+- **Seven factorial configurations** under `configurations/`, implementing the $2^3$ factorial over $(\alpha, \theta, \beta)$:
+  - `AIDA2_betauFBHearingAid/`, `AIDA2_betaWFBHearingAid/` ($\beta$-only cells)
+  - `AIDA2_thetauFBHearingAid/`, `AIDA2_thetaWFBHearingAid/` ($\theta$-only cells)
+  - `SEM_uFBHearingAid/` (pure Wiener, uniform filter bank)
+  - `SEM_litHearingAid/`, `SEM_lit_uFBHearingAid/` (full AIDA-2 at $\theta = 2.5$~dB, $\beta = 0.25$)
+- **Three analysis scripts** under `scripts/`:
+  - `compute_credible_intervals.py` — per-(system, environment, SNR) 95% credible intervals with a Student-$t$ likelihood, sampled via NUTS in NumPyro.
+  - `compute_noise_stationarity.jl` — per-environment noise log-power standard deviation computed from $n = y - x$.
+  - `summarize_metrics.jl` — aggregates per-file scores into by-SNR and by-(environment, SNR) pivot tables.
+- **Composite metrics wrapper** `python_modules/composite_wrapper.py` for CSIG, CBAK, COVL (Hu & Loizou 2008), enabling the `--composite` flag on `run_evaluation.jl`.
+- **Canonical published run** under `results/VOICEBANK_DEMAND/ojsp_2026_factorial/` (`results.csv`, `credible_intervals.csv`, `run_metadata.toml`) — the exact numbers reported in the revised manuscript.
+
+Canonical clamped values in the revised paper: $\theta = 2.5$~dB and $\beta = 0.25$, both obtained by rounding the one-decimal-digit conversion of the classical target minimum gain $G_\mathrm{min} = -12$~dB (no further runtime rounding). These match the values in every SEM-family configuration's `threshold_dB` / `threshold_lin` fields.
 
 ## How This Repository Relates to the Paper
 

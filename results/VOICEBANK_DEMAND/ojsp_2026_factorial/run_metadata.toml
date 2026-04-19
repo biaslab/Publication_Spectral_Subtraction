@@ -1,0 +1,9 @@
+args = ["--systems=Unprocessed,SEM_uFB,SEM,AIDA2_thetauFB,AIDA2_betauFB,AIDA2_thetaWFB,AIDA2_betaWFB,SEM_lit_uFB,SEM_lit", "--composite", "--run-name=factorial_full", "--checkpoint-interval=50"]
+git_dirty = true
+git_sha = "dab0d880b2f19ee29c20cfc699663be5f7e385df"
+hostname = "mac.home"
+julia = "1.11.7"
+nthreads = 1
+run_id = "20260417_215957_dab0d880"
+started_at = "2026-04-17T21:59:57.622"
+systems = ["Unprocessed", "SEM_uFB", "SEM", "AIDA2_thetauFB", "AIDA2_betauFB", "AIDA2_thetaWFB", "AIDA2_betaWFB", "SEM_lit_uFB", "SEM_lit"]

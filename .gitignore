@@ -1,6 +1,13 @@
 # Data folders - these contain large audio files and should not be tracked
 data/
-results/
+results/**
+# Exception: the canonical published run used in the OJ-SP 2026 paper.
+# Must walk the path component-by-component because git does not recurse into
+# an ignored directory to see later negations.
+!results/
+!results/VOICEBANK_DEMAND/
+!results/VOICEBANK_DEMAND/ojsp_2026_factorial/
+!results/VOICEBANK_DEMAND/ojsp_2026_factorial/**
 
 # Database testset folders - ignore all audio data directories and their contents
 # These patterns will ignore the directories and all .wav files within them
