@@ -15,11 +15,54 @@ Tag `v1.1.0` on branch `revision-2026-ojsp` adds the material needed to reproduc
   - `AIDA2_thetauFBHearingAid/`, `AIDA2_thetaWFBHearingAid/` ($\theta$-only cells)
   - `SEM_uFBHearingAid/` (pure Wiener, uniform filter bank)
   - `SEM_litHearingAid/`, `SEM_lit_uFBHearingAid/` (full AIDA-2 at $\theta = 2.5$~dB, $\beta = 0.25$)
-- **Two analysis scripts** under `scripts/`:
+- **Analysis scripts** under `scripts/`:
+  - `run_evaluation.jl` — main evaluation pipeline (runs all 9 factorial systems on the 824-file test set, emits `results.csv`).
+  - `summarize_metrics.jl` — aggregates per-file scores into by-SNR, by-env, and by-(env, SNR) pivot CSVs.
   - `compute_credible_intervals.py` — per-(system, environment, SNR) 95% credible intervals with a Student-$t$ likelihood, sampled via NUTS in NumPyro.
-  - `summarize_metrics.jl` — aggregates per-file scores into by-SNR and by-(environment, SNR) pivot tables.
+  - `compute_derived_tables.py` — produces the four derived tables reported in the paper (aggregate per-system factorial with CIs, per-environment EUM delta, SNR-stratified main effects and interaction, per-regime A/B/T/W optimum grid) from `results.csv`.
+  - `extract_posteriors.jl` — extracts per-frame posterior trajectories (speech power, noise power, log-SNR, gain) for the parameter-evolution figure.
+  - `resample_voicebank_demand.jl` — dataset prep (48 kHz → 16 kHz resampling of VoiceBank+DEMAND).
+  - `convert_to_wfb.jl` — builds the WFB-preprocessed dataset from the 16 kHz audio.
+  - `figures/generate_band5_data.jl`, `figures/plot_parameter_evolution.jl` — generate the band-13 parameter-evolution JPEG (Fig. 3 of the paper).
 - **Composite metrics wrapper** `python_modules/composite_wrapper.py` for CSIG, CBAK, COVL (Hu & Loizou 2008), enabling the `--composite` flag on `run_evaluation.jl`.
-- **Canonical published run** under `results/VOICEBANK_DEMAND/ojsp_2026_factorial/` (`results.csv`, `credible_intervals.csv`, `run_metadata.toml`) — the exact numbers reported in the revised manuscript.
+- **Canonical published run** under `results/VOICEBANK_DEMAND/ojsp_2026_factorial/`:
+  - `results.csv` — per-file scores (9 systems × 824 files × 4 metrics).
+  - `credible_intervals.csv` — per-(system, env, SNR) Student-$t$ NUTS 95% CIs.
+  - `results_by_snr.csv`, `results_by_env_snr.csv`, `results_summary.csv` — pivots produced by `summarize_metrics.jl`.
+  - `tab_factorial_with_ci.csv`, `tab_per_env_eum_delta.csv`, `tab_effects_by_snr.csv`, `tab_per_regime_optimum.csv` — the four paper-ready derived tables produced by `compute_derived_tables.py`.
+  - `run_metadata.toml` — the exact system list and CLI arguments of the canonical run.
+
+### Reproducing the paper results
+
+```bash
+# 1. Dataset prep (one-time, requires VoiceBank+DEMAND 48 kHz source).
+julia --project=. scripts/resample_voicebank_demand.jl
+julia --project=. scripts/convert_to_wfb.jl
+
+# 2. Run the full 2^3 factorial evaluation.
+julia --project=. scripts/run_evaluation.jl --composite \
+    --systems=Unprocessed,SEM_uFB,SEM,AIDA2_thetauFB,AIDA2_betauFB,AIDA2_thetaWFB,AIDA2_betaWFB,SEM_lit_uFB,SEM_lit \
+    --run-name=my_factorial
+
+# 3. Aggregate pivots.
+julia --project=. scripts/summarize_metrics.jl \
+    --in results/VOICEBANK_DEMAND/my_factorial/results.csv
+
+# 4. Per-cell credible intervals.
+python3 scripts/compute_credible_intervals.py \
+    --results-csv results/VOICEBANK_DEMAND/my_factorial/results.csv \
+    --out        results/VOICEBANK_DEMAND/my_factorial/credible_intervals.csv
+
+# 5. Derived tables (factorial+CIs, per-env EUM delta, effects-by-SNR, regime-optimum).
+python3 scripts/compute_derived_tables.py \
+    --results-csv results/VOICEBANK_DEMAND/my_factorial/results.csv \
+    --out-dir     results/VOICEBANK_DEMAND/my_factorial/
+
+# 6. Parameter-evolution figure (Fig. 3).
+julia --project=. scripts/figures/generate_band5_data.jl
+```
+
+The canonical run is already included under `results/VOICEBANK_DEMAND/ojsp_2026_factorial/` so a fresh clone can regenerate every paper table without re-running step 2.
 
 Canonical clamped values in the revised paper: $\theta = 2.5$~dB and $\beta = 0.25$, both obtained by rounding the one-decimal-digit conversion of the classical target minimum gain $G_\mathrm{min} = -12$~dB (no further runtime rounding). These match the values in every SEM-family configuration's `threshold_dB` / `threshold_lin` fields.
 
