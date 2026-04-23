@@ -274,14 +274,27 @@ def main():
         "pypesq",
         "onnxruntime"
     ]
-    
+
+    # Hu & Loizou (2008) composite metrics (CSIG/CBAK/COVL) require pysepm.
+    # pysepm is not on PyPI, so we install it from its GitHub archive. The
+    # composite metrics are optional and are only used when run_evaluation.jl
+    # is invoked with --composite.
+    composite_packages = [
+        "https://github.com/schmiph2/pysepm/archive/master.zip"
+    ]
+
     print_status("Installing core dependencies...", "INFO")
     for package in core_packages:
         install_package(package, args.conda, args.force, args.verbose)
-    
+
     print_status("Installing metrics dependencies...", "INFO")
     for package in metrics_packages:
         install_package(package, args.conda, args.force, args.verbose)
+
+    print_status("Installing composite metrics dependencies (pysepm; optional)...", "INFO")
+    for package in composite_packages:
+        # conda cannot install from a GitHub archive URL; fall back to pip.
+        install_package(package, use_conda=False, force=args.force, verbose=args.verbose)
     
     # Check DNSMOS submodule
     if check_dnsmos_submodule():

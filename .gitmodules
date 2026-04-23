@@ -4,3 +4,6 @@
 [submodule "dependencies/VirtualHearingAid"]
 	path = dependencies/VirtualHearingAid
 	url = https://github.com/biaslab/VirtualHearingAid.jl.git
+[submodule "python_modules/DNSMOS"]
+	path = python_modules/DNSMOS
+	url = https://github.com/microsoft/DNS-Challenge.git

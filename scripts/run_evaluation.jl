@@ -76,8 +76,11 @@ function parse_args()
             help = "Limit number of samples to process"
             arg_type = Int
             default = nothing
+        "--composite"
+            help = "Also compute the Hu & Loizou (2008) CSIG/CBAK/COVL composite metrics (requires pysepm)"
+            action = :store_true
     end
-    
+
     return ArgParse.parse_args(s)
 end
 
@@ -159,7 +162,8 @@ end
 Process and evaluate a single file pair.
 """
 function evaluate_single_file(ha, clean_path::String, noisy_path::String,
-                             metadata::Dict, save_output::Bool, output_dir::Union{String, Nothing}, ha_type_str::String)::Dict{String, Any}
+                             metadata::Dict, save_output::Bool, output_dir::Union{String, Nothing}, ha_type_str::String;
+                             include_composite::Bool=false)::Dict{String, Any}
     try
         # Load clean audio (always needed as reference)
         clean_audio = load_audio_file(clean_path)
@@ -181,32 +185,44 @@ function evaluate_single_file(ha, clean_path::String, noisy_path::String,
             output_vec = output.data
         end
         
-        # # Ensure same length for metrics evaluation
-        # min_len = min(length(clean_vec), length(output_vec))
-        # clean_vec = clean_vec[1:min_len]
-        # output_vec = output_vec[1:min_len]
-        
-        metrics = HADatasets.evaluate_audio_metrics(clean_vec, output_vec, Int(clean_audio.samplerate))
-        
+        # Truncate to the shorter signal so reference-based metrics (PESQ, CSIG/CBAK/COVL)
+        # can score. SEM synthesis occasionally emits 1-16 extra samples at the WFB
+        # boundary (<1 ms at 16 kHz, imperceptible). Both signals share the same leading
+        # alignment, so tail truncation is safe.
+        min_len = min(length(clean_vec), length(output_vec))
+        clean_vec = clean_vec[1:min_len]
+        output_vec = output_vec[1:min_len]
+
+        metrics = HADatasets.evaluate_audio_metrics(clean_vec, output_vec, Int(clean_audio.samplerate);
+                                                    include_composite=include_composite)
+
         # Save output if requested
         if save_output && !isnothing(output_dir)
             filename = metadata["filename"]
             output_path = joinpath(output_dir, filename)
             save_output_file(output, output_path)
         end
-        
-        # Create result dictionary
+
+        # Create result dictionary. DNSMOS scores are stored under the D-prefixed
+        # column names (DSIG, DBAK, DOVRL) so they remain visually parallel to the
+        # composite metrics (CSIG, CBAK, COVL) in every downstream CSV / table.
         result_dict = Dict{String, Any}(
             "filename" => metadata["filename"],
             "noise_type" => metadata["noise_type"],
             "snr_db" => metadata["snr_db"],
             "PESQ" => metrics.PESQ,
-            "SIG" => metrics.SIG,
-            "BAK" => metrics.BAK,
-            "OVRL" => metrics.OVRL,
+            "DSIG" => metrics.DSIG,
+            "DBAK" => metrics.DBAK,
+            "DOVRL" => metrics.DOVRL,
             "processing_timestamp" => now()
         )
-        
+
+        if haskey(metrics, :CSIG)
+            result_dict["CSIG"] = metrics.CSIG
+            result_dict["CBAK"] = metrics.CBAK
+            result_dict["COVL"] = metrics.COVL
+        end
+
         return result_dict
         
     catch e
@@ -431,8 +447,9 @@ function main()
     checkpoint_interval = args["checkpoint-interval"]
     save_output = args["save-output"]
     num_samples = args["num-samples"]
-    
-    @info "Starting evaluation" config_path=config_path single_file=single_file checkpoint_interval=checkpoint_interval save_output=save_output
+    include_composite = args["composite"]
+
+    @info "Starting evaluation" config_path=config_path single_file=single_file checkpoint_interval=checkpoint_interval save_output=save_output include_composite=include_composite
     
     config = load_config(config_path)
     metadata = get(config, "metadata", Dict{String, Any}())
@@ -532,7 +549,8 @@ function main()
             "snr_db" => row.snr_db
         )
         
-        result = evaluate_single_file(ha, clean_path, noisy_path, metadata, save_output, output_dir, ha_type_str)
+        result = evaluate_single_file(ha, clean_path, noisy_path, metadata, save_output, output_dir, ha_type_str;
+                                      include_composite=include_composite)
         push!(all_results, result)
         checkpoint_counter += 1
         
@@ -578,8 +596,9 @@ function main()
         # Create summary tables
         @info "Creating summary tables..."
         try
-            # Include all available metrics: PESQ, OVRL, BAK, SIG
-            metrics = ["PESQ", "OVRL", "BAK", "SIG"]
+            # Include all available metrics: PESQ, DNSMOS (DOVRL/DBAK/DSIG),
+            # and optionally the Hu & Loizou composites (COVL/CBAK/CSIG).
+            metrics = ["PESQ", "DOVRL", "DBAK", "DSIG", "COVL", "CBAK", "CSIG"]
             available_metrics = [m for m in metrics if hasproperty(df, Symbol(m))]
             
             if !isempty(available_metrics)

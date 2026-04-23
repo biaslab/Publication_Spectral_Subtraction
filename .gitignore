@@ -3,15 +3,25 @@ data/
 results/
 
 # Database testset folders - ignore all audio data directories and their contents
-# These patterns will ignore the directories and all .wav files within them
+# The trailing-slash forms catch real directories; the no-slash forms catch
+# symlinks (git treats symlinks as files, not dirs, so the slash forms alone
+# miss them).
 databases/**/clean_testset_wav/
 databases/**/noisy_testset_wav/
 databases/**/clean_testset_wav/**
 databases/**/noisy_testset_wav/**
+databases/**/clean_testset_wav
+databases/**/noisy_testset_wav
 
 # Ignore testset text files
 databases/**/testset_txt/
 databases/**/testset_txt/**
+
+# Python byte-cache directories (created by PyCall when importing
+# python_modules/dnsmos_wrapper and python_modules/composite_wrapper).
+__pycache__/
+*.pyc
+*.pyo
 
 # Julia specific
 *.jl.cov

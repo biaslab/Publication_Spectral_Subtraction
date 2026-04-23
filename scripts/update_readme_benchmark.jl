@@ -19,13 +19,20 @@ RESULTS_DIR = joinpath(@__DIR__, "..", "results", "VOICEBANK_DEMAND")
 FIGURES_DIR = joinpath(@__DIR__, "..", "figures")
 README_PATH = joinpath(@__DIR__, "..", "README.md")
 
-# Metrics to plot
-METRICS = ["PESQ", "SIG", "BAK", "OVRL"]
+# Metrics to plot. DNSMOS carries a D-prefix (DSIG/DBAK/DOVRL) so it remains
+# visually parallel to the Hu & Loizou composite metrics (CSIG/CBAK/COVL) and
+# can never be confused with them in table headers. CSIG/CBAK/COVL are
+# included when the evaluation was run with --composite; runs without them
+# are skipped per-metric by the table builders below without error.
+METRICS = ["PESQ", "DSIG", "DBAK", "DOVRL", "CSIG", "CBAK", "COVL"]
 METRIC_LABELS = Dict(
     "PESQ" => "PESQ (1-5)",
-    "SIG" => "SIG (1-5)",
-    "BAK" => "BAK (1-5)",
-    "OVRL" => "OVRL (1-5)"
+    "DSIG" => "DSIG — DNSMOS Signal (1-5)",
+    "DBAK" => "DBAK — DNSMOS Background (1-5)",
+    "DOVRL" => "DOVRL — DNSMOS Overall (1-5)",
+    "CSIG" => "CSIG — Composite Signal (1-5)",
+    "CBAK" => "CBAK — Composite Background (1-5)",
+    "COVL" => "COVL — Composite Overall (1-5)"
 )
 
 
@@ -102,7 +109,7 @@ function create_overall_summary_table(data_dict)
         end
         push!(devices, device_name)
         for metric in METRICS
-            col_name = Symbol("$(metric)_mean")
+            col_name = Symbol(metric)
             if hasproperty(df, col_name)
                 push!(metric_data[metric], df[1, col_name])
             else
@@ -152,7 +159,7 @@ function create_snr_table(data_dict)
             snr = row.SNR
             device_data[device_name][snr] = Dict{String, Float64}()
             for metric in METRICS
-                col_name = Symbol("$(metric)_mean")
+                col_name = Symbol(metric)
                 if hasproperty(df, col_name)
                     device_data[device_name][snr][metric] = row[col_name]
                 end
@@ -235,7 +242,7 @@ function create_environment_snr_table(data_dict)
                 device_data[device_name][env][snr] = Dict{String, Float64}()
             end
             for metric in METRICS
-                col_name = Symbol("$(metric)_mean")
+                col_name = Symbol(metric)
                 if hasproperty(df, col_name)
                     device_data[device_name][env][snr][metric] = row[col_name]
                 end
