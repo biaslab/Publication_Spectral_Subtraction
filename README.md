@@ -379,6 +379,7 @@ Spectral_Subtraction/
 │   ├── convert_to_wfb.jl              # WFB conversion script
 │   ├── run_evaluation.jl              # Per-config evaluation script
 │   ├── run_paper_results.jl           # One-command reproduction orchestrator
+│   ├── generate_latex_tables.jl       # Populates the paper's LaTeX tables from the latest runs
 │   └── update_readme_benchmark.jl     # Benchmark results update script
 ├── src/
 │   ├── Experiments.jl                 # Main evaluation module
@@ -479,7 +480,20 @@ If you prefer to run each stage yourself (for debugging, or to run only a subset
    julia scripts/update_readme_benchmark.jl
    ```
 
-4. The results used in the paper correspond to the runs in:
+4. **Generate the paper's LaTeX tables** directly from the same runs:
+
+   ```bash
+   julia --project=. scripts/generate_latex_tables.jl
+   ```
+
+   This populates three files under `tables/`:
+   - `tables/tab_comparison_with_params.tex` — one-row-per-system comparison with PESQ / CSIG / CBAK / COVL means (and a `±` line of per-file sample standard deviations for the SEM row). Populates `\label{tab:comparison_with_params}`.
+   - `tables/tab_metrics_quadrants.tex` — the full 4-metric × 5-environment × 4-SNR × 3-system ablation, every cell formatted as `$\mathrm{mean} \pm \mathrm{std}$` over the files assigned to that (environment, SNR) cell. Populates `\label{tab:metrics-quadrants}`.
+   - `tables/tab_per_env_delta.tex` — per-environment improvement summary, averaged across the four input SNRs: `Δ_{U→W}` = SEM (WFB) − Unprocessed, and `Δ_{u→W}` = SEM (WFB) − SEM (uFB) (WFB ablation). The best positive improvement per column is rendered in `\mathbf{}`. Populates `\label{tab:per-env-delta}`.
+
+   The script reads the latest `run_*/table/results.csv` for each of `baseline_noise`, `SEMHearingAid_uFB`, `SEMHearingAid`. Drop `\input{tables/<filename>}` in the paper body to use them.
+
+5. The results used in the paper correspond to the runs in:
    ```
    results/VOICEBANK_DEMAND/<Device>/run_<timestamp>/
    ```
