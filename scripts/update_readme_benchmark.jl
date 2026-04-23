@@ -109,7 +109,7 @@ function create_overall_summary_table(data_dict)
         end
         push!(devices, device_name)
         for metric in METRICS
-            col_name = Symbol("$(metric)_mean")
+            col_name = Symbol(metric)
             if hasproperty(df, col_name)
                 push!(metric_data[metric], df[1, col_name])
             else
@@ -159,7 +159,7 @@ function create_snr_table(data_dict)
             snr = row.SNR
             device_data[device_name][snr] = Dict{String, Float64}()
             for metric in METRICS
-                col_name = Symbol("$(metric)_mean")
+                col_name = Symbol(metric)
                 if hasproperty(df, col_name)
                     device_data[device_name][snr][metric] = row[col_name]
                 end
@@ -242,7 +242,7 @@ function create_environment_snr_table(data_dict)
                 device_data[device_name][env][snr] = Dict{String, Float64}()
             end
             for metric in METRICS
-                col_name = Symbol("$(metric)_mean")
+                col_name = Symbol(metric)
                 if hasproperty(df, col_name)
                     device_data[device_name][env][snr][metric] = row[col_name]
                 end
