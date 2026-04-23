@@ -8,7 +8,7 @@ A comprehensive evaluation framework for virtual hearing aids using the VOICEBAN
 
 This revision of the repository reports **two complementary speech-quality metric families** side by side for transparency:
 
-- The **DNSMOS P.835** non-intrusive metrics (SIG, BAK, OVRL), used in the initial submission, and
+- The **DNSMOS P.835** non-intrusive metrics, reported as `DSIG`, `DBAK`, `DOVRL` (D-prefix so they stay visually parallel to the composite metrics and never get confused with them), used in the initial submission, and
 - The **Hu & Loizou (2008) composite metrics** (CSIG, CBAK, COVL), which are the P.835-aligned intrusive metrics requested during the review cycle.
 
 Both families are produced from the same evaluation run when `run_evaluation.jl` is invoked with `--composite`; earlier DNSMOS-only runs remain byte-identical when the flag is omitted.
@@ -255,9 +255,9 @@ results/VOICEBANK_DEMAND/
 Each evaluation computes the following metrics:
 
 - **PESQ** (Perceptual Evaluation of Speech Quality): 1-5 scale, higher is better
-- **SIG** (Signal Quality from DNSMOS): 1-5 scale, higher is better
-- **BAK** (Background Quality from DNSMOS): 1-5 scale, higher is better
-- **OVRL** (Overall Quality from DNSMOS): 1-5 scale, higher is better
+- **DSIG** (Signal Quality from DNSMOS): 1-5 scale, higher is better
+- **DBAK** (Background Quality from DNSMOS): 1-5 scale, higher is better
+- **DOVRL** (Overall Quality from DNSMOS): 1-5 scale, higher is better
 
 When invoked with `--composite`, the evaluation additionally computes three Hu & Loizou (2008) composite metrics:
 
@@ -293,7 +293,7 @@ julia scripts/update_readme_benchmark.jl
 This script:
 - Finds the latest runs for each hearing aid (excluding Baseline_clean)
 - Generates comprehensive comparison tables showing:
-  - Overall summary across all metrics (PESQ, SIG, BAK, OVRL)
+  - Overall summary across all metrics (PESQ, DSIG, DBAK, DOVRL, and optionally CSIG, CBAK, COVL)
   - Performance breakdown by SNR level (2.5, 7.5, 12.5, 17.5 dB)
   - Performance breakdown by environment and SNR (bus, cafe, living, office, psquare)
 - Updates the README with the latest results and configuration details
@@ -324,17 +324,19 @@ This repository uses comprehensive speech quality assessment metrics to evaluate
 
 **P.835 Dimensions**:
 
-- **OVRL (Overall Quality)**: Overall audio quality assessment
+- **DOVRL (DNSMOS Overall Quality)**: Overall audio quality assessment
   - Measures the overall perceived quality of the processed audio
   - Combines both speech and background noise quality perceptions
 
-- **SIG (Signal Quality)**: Speech quality assessment
+- **DSIG (DNSMOS Signal Quality)**: Speech quality assessment
   - Focuses specifically on the quality of the speech signal
   - Measures how natural and clear the speech sounds
 
-- **BAK (Background Quality)**: Background noise quality assessment
+- **DBAK (DNSMOS Background Quality)**: Background noise quality assessment
   - Evaluates the quality of the background/noise component
   - Measures how well noise is suppressed while preserving speech
+
+The D-prefix is deliberate: it keeps these DNSMOS columns visually parallel to the `CSIG`/`CBAK`/`COVL` composite metrics so no one reading a table confuses the two families.
 
 ### Hu & Loizou (2008) Composite Metrics (CSIG, CBAK, COVL)
 
@@ -350,7 +352,7 @@ This repository uses comprehensive speech quality assessment metrics to evaluate
 The combination of PESQ, DNSMOS, and (optionally) the Hu & Loizou composite metrics provides a comprehensive evaluation:
 
 - **PESQ** provides an intrusive reference-based assessment, giving a direct comparison to the clean signal.
-- **DNSMOS** provides a non-intrusive assessment that doesn't require a reference, making it useful for real-world scenarios where clean references may not be available. Its three P.835 dimensions (OVRL, SIG, BAK) summarize overall, speech, and background quality from a deep acoustic model.
+- **DNSMOS** provides a non-intrusive assessment that doesn't require a reference, making it useful for real-world scenarios where clean references may not be available. Its three P.835 dimensions (`DOVRL`, `DSIG`, `DBAK`) summarize overall, speech, and background quality from a deep acoustic model.
 - **CSIG/CBAK/COVL** provide a second, classical P.835-aligned readout derived from well-established time/frequency features, and are reported alongside DNSMOS for transparency and cross-check.
 
 ### Research Context
@@ -433,7 +435,7 @@ This single orchestrator:
 2. Generates the WFB-processed reference dataset (skipped if already done).
 3. Evaluates the four configurations used by the paper tables with
    `--composite --checkpoint-interval 50`, so every per-file row and every
-   summary CSV carries the seven metrics (PESQ, SIG, BAK, OVRL, CSIG, CBAK,
+   summary CSV carries the seven metrics (PESQ, DSIG, DBAK, DOVRL, CSIG, CBAK,
    COVL):
    - `configurations/baseline_clean/baseline_clean.toml` (upper bound)
    - `configurations/baseline_noise/baseline_noise.toml` (unprocessed lower bound)
@@ -461,7 +463,7 @@ If you prefer to run each stage yourself (for debugging, or to run only a subset
 
 1. Prepare the `VOICEBANK_DEMAND_resampled_wfb` dataset by following Steps 1 and 2 in this README.
 
-2. Run the hearing-aid configurations, passing `--composite` so that each run reports both the DNSMOS metrics (SIG, BAK, OVRL) and the Hu & Loizou composite metrics (CSIG, CBAK, COVL):
+2. Run the hearing-aid configurations, passing `--composite` so that each run reports both the DNSMOS metrics (`DSIG`, `DBAK`, `DOVRL`) and the Hu & Loizou composite metrics (`CSIG`, `CBAK`, `COVL`):
 
    ```bash
    # Main paper algorithm (warped filter bank, apcoefficient = 0.5)
@@ -483,7 +485,7 @@ If you prefer to run each stage yourself (for debugging, or to run only a subset
    ```
 
    Each run directory contains a single `results.csv` with all seven metrics
-   (PESQ, SIG, BAK, OVRL, CSIG, CBAK, COVL) plus three summary CSVs broken
+   (PESQ, DSIG, DBAK, DOVRL, CSIG, CBAK, COVL) plus three summary CSVs broken
    down by SNR and by (environment, SNR), ready to paste into the paper.
 
 ## Extending the Framework

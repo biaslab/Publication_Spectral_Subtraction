@@ -185,11 +185,14 @@ function evaluate_single_file(ha, clean_path::String, noisy_path::String,
             output_vec = output.data
         end
         
-        # # Ensure same length for metrics evaluation
-        # min_len = min(length(clean_vec), length(output_vec))
-        # clean_vec = clean_vec[1:min_len]
-        # output_vec = output_vec[1:min_len]
-        
+        # Truncate to the shorter signal so reference-based metrics (PESQ, CSIG/CBAK/COVL)
+        # can score. SEM synthesis occasionally emits 1-16 extra samples at the WFB
+        # boundary (<1 ms at 16 kHz, imperceptible). Both signals share the same leading
+        # alignment, so tail truncation is safe.
+        min_len = min(length(clean_vec), length(output_vec))
+        clean_vec = clean_vec[1:min_len]
+        output_vec = output_vec[1:min_len]
+
         metrics = HADatasets.evaluate_audio_metrics(clean_vec, output_vec, Int(clean_audio.samplerate);
                                                     include_composite=include_composite)
 
@@ -200,15 +203,17 @@ function evaluate_single_file(ha, clean_path::String, noisy_path::String,
             save_output_file(output, output_path)
         end
 
-        # Create result dictionary
+        # Create result dictionary. DNSMOS scores are stored under the D-prefixed
+        # column names (DSIG, DBAK, DOVRL) so they remain visually parallel to the
+        # composite metrics (CSIG, CBAK, COVL) in every downstream CSV / table.
         result_dict = Dict{String, Any}(
             "filename" => metadata["filename"],
             "noise_type" => metadata["noise_type"],
             "snr_db" => metadata["snr_db"],
             "PESQ" => metrics.PESQ,
-            "SIG" => metrics.SIG,
-            "BAK" => metrics.BAK,
-            "OVRL" => metrics.OVRL,
+            "DSIG" => metrics.DSIG,
+            "DBAK" => metrics.DBAK,
+            "DOVRL" => metrics.DOVRL,
             "processing_timestamp" => now()
         )
 
@@ -591,8 +596,9 @@ function main()
         # Create summary tables
         @info "Creating summary tables..."
         try
-            # Include all available metrics: PESQ, OVRL, BAK, SIG, and optionally CSIG/CBAK/COVL
-            metrics = ["PESQ", "OVRL", "BAK", "SIG", "CSIG", "CBAK", "COVL"]
+            # Include all available metrics: PESQ, DNSMOS (DOVRL/DBAK/DSIG),
+            # and optionally the Hu & Loizou composites (COVL/CBAK/CSIG).
+            metrics = ["PESQ", "DOVRL", "DBAK", "DSIG", "COVL", "CBAK", "CSIG"]
             available_metrics = [m for m in metrics if hasproperty(df, Symbol(m))]
             
             if !isempty(available_metrics)

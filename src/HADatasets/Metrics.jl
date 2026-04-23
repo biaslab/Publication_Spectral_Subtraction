@@ -95,15 +95,21 @@ end
     DNSMOSResults
 
 Type alias for DNSMOS evaluation results as NamedTuple.
+
+The field names carry a `D` prefix (`DSIG`, `DBAK`, `DOVRL`) so DNSMOS scores
+remain visually parallel to the `CSIG`/`CBAK`/`COVL` composite metrics and
+can never be confused with them in downstream CSVs or tables.
 """
-const DNSMOSResults = NamedTuple{(:SIG, :BAK, :OVRL), Tuple{Float64, Float64, Float64}}
+const DNSMOSResults = NamedTuple{(:DSIG, :DBAK, :DOVRL), Tuple{Float64, Float64, Float64}}
 
 """
     dnsmos_score(processed, fs)
 
 Calculate DNSMOS (Deep Noise Suppression Mean Opinion Score) using Microsoft's DNSMOS P.835.
 
-Returns a NamedTuple with SIG, BAK, and OVRL scores. Requires 16 kHz sample rate.
+Returns a NamedTuple with `DSIG`, `DBAK`, and `DOVRL` scores (the D-prefix
+disambiguates these from the CSIG/CBAK/COVL composite metrics). Requires
+16 kHz sample rate.
 
 # Performance
 Uses NamedTuple instead of Dict for better type stability and performance.
@@ -124,10 +130,10 @@ function dnsmos_score(processed::Vector{Float64}, fs::Int)::DNSMOSResults
 
     try
         scores = dnsmos_module[].dnsmos(processed, fs)
-        # Return as NamedTuple for better performance
-        return (SIG=Float64(scores["SIG"]),
-                BAK=Float64(scores["BAK"]),
-                OVRL=Float64(scores["OVRL"]))
+        # Upstream Python still reports SIG/BAK/OVRL; rename to D-prefixed fields here.
+        return (DSIG=Float64(scores["SIG"]),
+                DBAK=Float64(scores["BAK"]),
+                DOVRL=Float64(scores["OVRL"]))
     catch e
         @error "DNSMOS calculation failed" exception=(e, catch_backtrace())
         rethrow(e)
@@ -190,7 +196,7 @@ composite_available() = composite_module[] !== nothing
 
 Type alias for the default metric evaluation results (PESQ + DNSMOS).
 """
-const MetricResults = NamedTuple{(:PESQ, :SIG, :BAK, :OVRL), Tuple{Float64, Float64, Float64, Float64}}
+const MetricResults = NamedTuple{(:PESQ, :DSIG, :DBAK, :DOVRL), Tuple{Float64, Float64, Float64, Float64}}
 
 """
     FullMetricResults
@@ -198,7 +204,7 @@ const MetricResults = NamedTuple{(:PESQ, :SIG, :BAK, :OVRL), Tuple{Float64, Floa
 Extended metric results including the Hu & Loizou composite scores.
 """
 const FullMetricResults = NamedTuple{
-    (:PESQ, :SIG, :BAK, :OVRL, :CSIG, :CBAK, :COVL),
+    (:PESQ, :DSIG, :DBAK, :DOVRL, :CSIG, :CBAK, :COVL),
     Tuple{Float64, Float64, Float64, Float64, Float64, Float64, Float64}
 }
 
@@ -233,14 +239,14 @@ function evaluate_all(reference::Vector{Float64}, denoised::Vector{Float64}, fs:
         if composite_available()
             comp = composite_score(reference, denoised, fs)
             return (PESQ=pesq_val,
-                    SIG=dnsmos_scores.SIG, BAK=dnsmos_scores.BAK, OVRL=dnsmos_scores.OVRL,
+                    DSIG=dnsmos_scores.DSIG, DBAK=dnsmos_scores.DBAK, DOVRL=dnsmos_scores.DOVRL,
                     CSIG=comp.CSIG, CBAK=comp.CBAK, COVL=comp.COVL)
         else
             error("include_composite=true was requested, but the pysepm-backed composite_wrapper could not be imported. Install pysepm with: pip install https://github.com/schmiph2/pysepm/archive/master.zip (or rerun without --composite).")
         end
     else
         return (PESQ=pesq_val,
-                SIG=dnsmos_scores.SIG, BAK=dnsmos_scores.BAK, OVRL=dnsmos_scores.OVRL)
+                DSIG=dnsmos_scores.DSIG, DBAK=dnsmos_scores.DBAK, DOVRL=dnsmos_scores.DOVRL)
     end
 end
 
