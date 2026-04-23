@@ -380,6 +380,7 @@ Spectral_Subtraction/
 │   ├── run_evaluation.jl              # Per-config evaluation script
 │   ├── run_paper_results.jl           # One-command reproduction orchestrator
 │   ├── generate_latex_tables.jl       # Populates the paper's LaTeX tables from the latest runs
+│   ├── plot_parameter_evolution.jl    # Regenerates the parameter-evolution figure (s/n, ξ, w̃)
 │   └── update_readme_benchmark.jl     # Benchmark results update script
 ├── src/
 │   ├── Experiments.jl                 # Main evaluation module
