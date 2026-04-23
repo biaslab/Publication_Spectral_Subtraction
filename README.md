@@ -13,6 +13,26 @@ This revision of the repository reports **two complementary speech-quality metri
 
 Both families are produced from the same evaluation run when `run_evaluation.jl` is invoked with `--composite`; earlier DNSMOS-only runs remain byte-identical when the flag is omitted.
 
+## Reviewers: reproduce every number in the paper with one command
+
+If you want to verify the paper's results end-to-end, run:
+
+```bash
+julia --project=. scripts/run_paper_results.jl
+```
+
+That one script resamples the dataset (Stage 1), generates the WFB-processed reference (Stage 2), evaluates all four paper configurations with `--composite --checkpoint-interval 50` (Stage 3), and regenerates the benchmark tables in this README (Stage 4). It is idempotent: re-running after completion only refreshes the tables, and re-running after an interrupted evaluation resumes from the last checkpoint. Expect a few hours on a laptop for the full 824-file testset × 4 systems × 7 metrics.
+
+Two follow-up commands produce the paper's LaTeX tables and parameter-evolution figure directly from the runs above:
+
+```bash
+julia --project=. scripts/generate_latex_tables.jl      # -> tables/*.tex
+julia --project=. scripts/plot_parameter_evolution.jl   # -> figures/parameter_evolution_bus_7p5dB_band13.*
+julia --project=. scripts/generate_results_md.jl        # -> RESULTS.md (markdown summary)
+```
+
+The one-time prerequisites (clone, Julia + Python dependencies, dataset download) are listed in the [Installation](#installation) and [Step 1](#step-1-download-and-resample-voicebank_demand-dataset) sections below.
+
 ## How This Repository Relates to the Paper
 
 This repository provides the complete implementation and evaluation framework for the spectral speech enhancement model presented in the paper. It includes:
