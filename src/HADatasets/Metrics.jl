@@ -20,6 +20,19 @@ function __init__()
         global dnsmos_module
         global composite_module
 
+        # Ensure the repo's Python wrappers (dnsmos_wrapper, composite_wrapper)
+        # are importable regardless of whether `pip install python_modules/`
+        # has registered them. `dnsmos_wrapper` is a proper package exported
+        # via setup.py, but `composite_wrapper.py` is a bare top-level module,
+        # so we prepend `python_modules/` to `sys.path` here. Idempotent.
+        wrapper_dir = abspath(joinpath(@__DIR__, "..", "..", "python_modules"))
+        if isdir(wrapper_dir)
+            sys = pyimport("sys")
+            if !(wrapper_dir in PyVector(sys."path"))
+                pushfirst!(PyVector(sys."path"), wrapper_dir)
+            end
+        end
+
         pesq_module[] = pyimport("pesq")
 
         try
