@@ -57,9 +57,19 @@ This script automatically:
 
 1. **Clone the repository with submodules:**
 ```bash
-git clone --recursive <repository-url>
-cd Spectral_Subtraction
+git clone --recursive https://github.com/biaslab/Publication_Spectral_Subtraction.git
+cd Publication_Spectral_Subtraction
 ```
+
+The `--recursive` flag is required because the repository pulls [microsoft/DNS-Challenge](https://github.com/microsoft/DNS-Challenge) as the `python_modules/DNSMOS/` submodule. DNSMOS ships as a standalone upstream project; vendoring it as a submodule pins the exact revision used for the paper's results and puts the ONNX models at the path the Julia wrapper expects (`python_modules/DNSMOS/DNSMOS/DNSMOS/{sig_bak_ovr,model_v8}.onnx`), so no manual path plumbing is needed.
+
+If you already cloned without `--recursive`, initialize the submodule after the fact:
+
+```bash
+git submodule update --init --recursive --depth=1
+```
+
+`--depth=1` keeps the DNS-Challenge checkout shallow (~3 MB of ONNX weights plus the reference Python; the full upstream repo is ~275 MB and most of it is unused training data). If you plan to work with the upstream DNS-Challenge data, drop `--depth=1`.
 
 2. **Install Julia dependencies:**
 ```julia
@@ -365,7 +375,8 @@ Spectral_Subtraction/
 │   └── VOICEBANK_DEMAND/              # Evaluation results
 ├── scripts/
 │   ├── convert_to_wfb.jl              # WFB conversion script
-│   ├── run_evaluation.jl              # Evaluation script
+│   ├── run_evaluation.jl              # Per-config evaluation script
+│   ├── run_paper_results.jl           # One-command reproduction orchestrator
 │   └── update_readme_benchmark.jl     # Benchmark results update script
 ├── src/
 │   ├── Experiments.jl                 # Main evaluation module
@@ -408,7 +419,45 @@ The input signal passes through a cascade of first-order all-pass filters, produ
 
 ## Reproducing the Paper Results
 
-To reproduce the results reported in the paper, including the reviewers'-feedback revision that adds the WFB ablation and the composite metrics:
+### One-command reproduction (recommended)
+
+If you just want to regenerate every table in the paper, including the WFB ablation and the composite metrics added in the revision, run:
+
+```bash
+julia --project=. scripts/run_paper_results.jl
+```
+
+This single orchestrator:
+
+1. Resamples VoiceBank+DEMAND to 16 kHz (skipped if already done).
+2. Generates the WFB-processed reference dataset (skipped if already done).
+3. Evaluates the four configurations used by the paper tables with
+   `--composite --checkpoint-interval 50`, so every per-file row and every
+   summary CSV carries the seven metrics (PESQ, SIG, BAK, OVRL, CSIG, CBAK,
+   COVL):
+   - `configurations/baseline_clean/baseline_clean.toml` (upper bound)
+   - `configurations/baseline_noise/baseline_noise.toml` (unprocessed lower bound)
+   - `configurations/SEMHearingAid/SEMHearingAid.toml` (paper algorithm, warped FB)
+   - `configurations/SEMHearingAid_uFB/SEMHearingAid_uFB.toml` (WFB ablation, uniform FB)
+4. Calls `scripts/update_readme_benchmark.jl` to refresh the markdown tables
+   at the bottom of this README.
+
+The orchestrator is idempotent: re-running it after a clean pass only
+regenerates the README tables; re-running after an interrupted evaluation
+resumes from the last checkpoint.
+
+Before running it once, you still need to:
+
+- Clone the repository with `git clone --recursive …` (so the
+  `python_modules/DNSMOS/` submodule is initialized; see Installation above).
+- Instantiate the Julia project: `julia --project=. -e 'using Pkg; Pkg.instantiate()'`.
+- Install the Python dependencies: `python install_python_deps.py`.
+- Download the raw VoiceBank+DEMAND corpus into `databases/VOICEBANK_DEMAND/`
+  as described in [Step 1](#step-1-download-and-resample-voicebank_demand-dataset).
+
+### Manual step-by-step reproduction
+
+If you prefer to run each stage yourself (for debugging, or to run only a subset):
 
 1. Prepare the `VOICEBANK_DEMAND_resampled_wfb` dataset by following Steps 1 and 2 in this README.
 
@@ -416,10 +465,10 @@ To reproduce the results reported in the paper, including the reviewers'-feedbac
 
    ```bash
    # Main paper algorithm (warped filter bank, apcoefficient = 0.5)
-   julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml --composite
+   julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml --composite --checkpoint-interval 50
 
    # WFB ablation (uniform filter bank, apcoefficient = 0.0)
-   julia scripts/run_evaluation.jl configurations/SEMHearingAid_uFB/SEMHearingAid_uFB.toml --composite
+   julia scripts/run_evaluation.jl configurations/SEMHearingAid_uFB/SEMHearingAid_uFB.toml --composite --checkpoint-interval 50
    ```
 
 3. Update the README tables:
@@ -433,9 +482,9 @@ To reproduce the results reported in the paper, including the reviewers'-feedbac
    results/VOICEBANK_DEMAND/<Device>/run_<timestamp>/
    ```
 
-   Each run directory contains a single `results.csv` with all seven metrics (PESQ, SIG, BAK, OVRL, CSIG, CBAK, COVL) plus the three summary CSVs broken down by SNR and by (environment, SNR).
-
-This reproduces every table in the paper's results section, including the WFB ablation and the composite-metric columns added in the revision.
+   Each run directory contains a single `results.csv` with all seven metrics
+   (PESQ, SIG, BAK, OVRL, CSIG, CBAK, COVL) plus three summary CSVs broken
+   down by SNR and by (environment, SNR), ready to paste into the paper.
 
 ## Extending the Framework
 
@@ -478,7 +527,9 @@ See existing configurations in `configurations/` for examples of the TOML struct
 
 - **Memory errors**: Use `--num-samples` to process in smaller batches
 - **Checkpoint errors**: Manually merge existing checkpoints if needed
-- **Metrics errors**: Ensure Python dependencies are installed (see HADatasets README)
+- **Metrics errors**: Ensure Python dependencies are installed (`python install_python_deps.py`)
+- **`ImportError: No module named 'dnsmos_local'`**: The `python_modules/DNSMOS/` submodule was not initialized. Run `git submodule update --init --recursive --depth=1` from the repository root.
+- **CSIG/CBAK/COVL missing from results**: `--composite` was not passed to `run_evaluation.jl`, or `pysepm` failed to install. Re-run `python install_python_deps.py` and confirm `pysepm` imports in Python.
 
 ## Optional Dependencies
 
