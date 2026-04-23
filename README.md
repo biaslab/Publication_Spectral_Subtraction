@@ -618,3 +618,175 @@ Licensed under **Creative Commons Attribution 4.0 International**:
 - **[ICASSP 2023 Deep Noise Suppression Challenge](https://www.microsoft.com/en-us/research/academic-program/deep-noise-suppression-challenge-icassp-2023/)**: Official challenge website and resources
 - **[DNSMOS Implementation](https://github.com/microsoft/DNS-Challenge)**: Microsoft's DNS Challenge repository with DNSMOS implementation
 - **[VoiceBank+Demand Dataset](https://datashare.ed.ac.uk/handle/10283/2791)**: Official dataset download page
+
+
+# Benchmark Results
+
+## Overview
+
+This section presents benchmark results comparing different hearing aid algorithms on the VOICEBANK_DEMAND dataset.
+
+## Overall Summary
+
+| Device | PESQ (1-5) | DSIG — DNSMOS Signal (1-5) | DBAK — DNSMOS Background (1-5) | DOVRL — DNSMOS Overall (1-5) | CSIG — Composite Signal (1-5) | CBAK — Composite Background (1-5) | COVL — Composite Overall (1-5) |
+|---|---|---|---|---|---|---|---|
+| SEM | - | - | - | - | - | - | - |
+| baseline_clean | - | - | - | - | - | - | - |
+| baseline_noise | - | - | - | - | - | - | - |
+| SEM_uFB | - | - | - | - | - | - | - |
+
+## Summary by Environment and SNR
+
+### DBAK — DNSMOS Background (1-5)
+
+### DOVRL — DNSMOS Overall (1-5)
+
+### PESQ (1-5)
+
+### DSIG — DNSMOS Signal (1-5)
+
+### CSIG — Composite Signal (1-5)
+
+### COVL — Composite Overall (1-5)
+
+### CBAK — Composite Background (1-5)
+
+## Configuration Details
+
+The following configurations were used for each hearing aid:
+
+### SEM
+
+```toml
+[parameters.hearingaid]
+name = "SEM Hearing Aid"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "WFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.5
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 1
+
+[parameters.backend.filters.time_constants90]
+s = 5.0    # Speech time constant (ms)
+n = 700.0  # Noise time constant (ms)
+xnr = 20.0 # ξ time constant (ms)
+
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.priors.noise]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.gain]
+threshold = 12.0 #(GMIN)
+
+[parameters.backend.switch]
+threshold = 2.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "03-12-2025"
+description = "SEM Hearing Aid configuration"
+name = "SEM"
+
+```
+
+### baseline_clean
+
+```toml
+# Baseline Clean Configuration
+# This configuration is used for baseline "best" evaluation (clean vs clean)
+
+[metadata]
+name = "Baseline Clean"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline clean evaluation - compares WFB-processed clean audio to itself (best case scenario)"
+
+```
+
+### baseline_noise
+
+```toml
+# Baseline Noise Configuration
+# This configuration is used for baseline "worst" evaluation (clean vs noisy)
+
+[metadata]
+name = "Baseline Noise"
+author = "VirtualHearingAid"
+date = "2025-01-27"
+description = "Baseline noise evaluation - compares WFB-processed clean audio to WFB-processed noisy audio (worst case scenario)"
+
+```
+
+### SEM_uFB
+
+```toml
+[parameters.hearingaid]
+name = "SEM Hearing Aid (uFB)"
+type = "SEMHearingAid"
+processing_strategy = "BatchProcessingOffline"
+
+[parameters.frontend]
+name = "uFB"
+type = "WFBFrontend"
+nbands = 17
+fs = 16000.0
+spl_reference_db = 100.0
+spl_power_estimate_lower_bound_db = 30.0
+apcoefficient = 0.0
+buffer_size_s = 0.0015
+
+[parameters.backend.general]
+name = "SEM"
+type = "SEMBackend"
+
+[parameters.backend.inference]
+autostart = true
+free_energy = false
+iterations = 1
+
+[parameters.backend.filters.time_constants90]
+s = 5.0    # Speech time constant (ms)
+n = 700.0  # Noise time constant (ms)
+xnr = 20.0 # ξ time constant (ms)
+
+[parameters.backend.priors.speech]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.priors.noise]
+mean = 80.0
+precision = 1.0
+
+[parameters.backend.gain]
+threshold = 12.0 #(GMIN)
+
+[parameters.backend.switch]
+threshold = 2.0
+
+[metadata]
+author = "VirtualHearingAid"
+date = "04-20-2026"
+description = "SEM Hearing Aid — uniform filter bank variant (apcoefficient = 0.0) for the WFB ablation reported in the OJ-SP revision."
+name = "SEM_uFB"
+```
+
