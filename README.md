@@ -6,13 +6,20 @@ This repository accompanies the paper:
 
 A comprehensive evaluation framework for virtual hearing aids using the VOICEBANK_DEMAND dataset with warped filter bank (WFB) preprocessing.
 
+This revision of the repository reports **two complementary speech-quality metric families** side by side for transparency:
+
+- The **DNSMOS P.835** non-intrusive metrics (SIG, BAK, OVRL), used in the initial submission, and
+- The **Hu & Loizou (2008) composite metrics** (CSIG, CBAK, COVL), which are the P.835-aligned intrusive metrics requested during the review cycle.
+
+Both families are produced from the same evaluation run when `run_evaluation.jl` is invoked with `--composite`; earlier DNSMOS-only runs remain byte-identical when the flag is omitted.
+
 ## How This Repository Relates to the Paper
 
 This repository provides the complete implementation and evaluation framework for the spectral speech enhancement model presented in the paper. It includes:
 
 - **Implementation**: Full codebase for the Warped-Frequency Filter Bank (WFB) front-end and Speech Enhancement Model (SEM) backend
-- **Evaluation Pipeline**: Automated evaluation on the VOICEBANK_DEMAND dataset with comprehensive metrics (PESQ, DNSMOS)
-- **Reproducibility**: All configurations and scripts needed to reproduce the results reported in the paper
+- **Evaluation Pipeline**: Automated evaluation on the VOICEBANK_DEMAND dataset with comprehensive metrics (PESQ, DNSMOS, and optionally the Hu & Loizou CSIG/CBAK/COVL composite metrics)
+- **Reproducibility**: All configurations and scripts needed to reproduce the results reported in the paper, including the uniform-filter-bank (uFB) ablation
 - **Benchmark Comparisons**: Automated generation of comparison tables 
 
 ## Overview
@@ -63,10 +70,10 @@ Pkg.instantiate()
 
 3. **Install Python dependencies for metrics:**
 ```bash
-cd dependencies/HADatasets
 python install_python_deps.py
-cd ../..
 ```
+
+This installs `pesq`, the bundled `dnsmos_wrapper`, and `pysepm` (used by the optional Hu & Loizou CSIG/CBAK/COVL composite metrics). `pysepm` is installed directly from its GitHub archive because it is not on PyPI; if the install fails for any reason, the composite metrics are disabled at runtime and PESQ+DNSMOS continue to work as before.
 
 ## Complete Workflow
 
@@ -178,10 +185,14 @@ julia scripts/run_evaluation.jl configurations/baseline_noise/baseline_noise.tom
 Evaluate each hearing aid algorithm on the WFB-processed dataset:
 
 ```bash
-# Evaluate SEM Hearing Aid
+# Evaluate SEM Hearing Aid with the warped filter bank front-end (apcoefficient = 0.5)
 julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml
 
+# Evaluate SEM Hearing Aid with the uniform filter bank front-end (apcoefficient = 0.0)
+julia scripts/run_evaluation.jl configurations/SEMHearingAid_uFB/SEMHearingAid_uFB.toml
 ```
+
+The two configurations above correspond to the WFB ablation reported in the OJ-SP revision (Section~VI "Structural Analysis of the WFB" and Appendix~E). They differ only in the filter-bank warping coefficient.
 
 #### 3.3 Evaluation Options
 
@@ -197,7 +208,13 @@ julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml 
 
 # Save processed output audio files
 julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml --save-output
+
+# Also compute the Hu & Loizou (2008) CSIG/CBAK/COVL composite metrics
+# (requires pysepm; installed by install_python_deps.py)
+julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml --composite
 ```
+
+`--composite` adds three columns (CSIG, CBAK, COVL) to `results.csv`, `overall_summary.csv`, `summary_by_snr.csv`, and `summary_by_environment_snr.csv`. When the flag is omitted, the output files are byte-identical to the pre-composite pipeline, so runs without `--composite` remain directly comparable to earlier releases (tag `v1.1.1`).
 
 ### Step 4: Results and Metrics
 
@@ -231,6 +248,14 @@ Each evaluation computes the following metrics:
 - **SIG** (Signal Quality from DNSMOS): 1-5 scale, higher is better
 - **BAK** (Background Quality from DNSMOS): 1-5 scale, higher is better
 - **OVRL** (Overall Quality from DNSMOS): 1-5 scale, higher is better
+
+When invoked with `--composite`, the evaluation additionally computes three Hu & Loizou (2008) composite metrics:
+
+- **CSIG** (Composite Signal): 1-5 scale, higher is better; predicts MOS for speech distortion.
+- **CBAK** (Composite Background): 1-5 scale, higher is better; predicts MOS for background intrusiveness.
+- **COVL** (Composite Overall): 1-5 scale, higher is better; predicts the overall MOS.
+
+CSIG/CBAK/COVL are linear regressions of PESQ, LLR, WSS, and segSNR tuned against ITU-T P.835 subjective ratings. They are reference-based (require the clean signal) and use the `pysepm` implementation of the Loizou reference code. If `pysepm` is not available at runtime, `--composite` raises a clear error and the non-composite pipeline is unaffected.
 
 #### 4.3 Summary Tables
 
@@ -301,13 +326,22 @@ This repository uses comprehensive speech quality assessment metrics to evaluate
   - Evaluates the quality of the background/noise component
   - Measures how well noise is suppressed while preserving speech
 
+### Hu & Loizou (2008) Composite Metrics (CSIG, CBAK, COVL)
+
+- **Type**: Intrusive (requires reference signal)
+- **Scale**: 1-5 (higher is better)
+- **Reference**: Hu, Y. and Loizou, P. C. (2008). "Evaluation of Objective Quality Measures for Speech Enhancement." IEEE Trans. Audio Speech Lang. Process. 16(1), 229–238.
+- **Use Case**: Predict subjective P.835 MOS ratings directly from the time-domain clean/enhanced pair without the DNSMOS neural net.
+- **Description**: CSIG, CBAK, and COVL are linear regressions of PESQ, LLR (log-likelihood ratio), WSS (weighted spectral slope), and segmental SNR against subjective ratings collected under the ITU-T P.835 protocol. We use the `pysepm` implementation of Loizou's reference MATLAB code.
+- **Availability**: Computed only when `run_evaluation.jl` is invoked with `--composite`; requires `pysepm` (installed automatically by `install_python_deps.py`).
+
 ### Metric Selection Rationale
 
-The combination of PESQ and DNSMOS provides a comprehensive evaluation:
+The combination of PESQ, DNSMOS, and (optionally) the Hu & Loizou composite metrics provides a comprehensive evaluation:
 
-- **PESQ** provides an intrusive reference-based assessment, giving a direct comparison to the clean signal
-- **DNSMOS** provides a non-intrusive assessment that doesn't require a reference, making it useful for real-world scenarios where clean references may not be available
-- The three DNSMOS dimensions (OVRL, SIG, BAK) provide detailed insights into different aspects of speech enhancement performance
+- **PESQ** provides an intrusive reference-based assessment, giving a direct comparison to the clean signal.
+- **DNSMOS** provides a non-intrusive assessment that doesn't require a reference, making it useful for real-world scenarios where clean references may not be available. Its three P.835 dimensions (OVRL, SIG, BAK) summarize overall, speech, and background quality from a deep acoustic model.
+- **CSIG/CBAK/COVL** provide a second, classical P.835-aligned readout derived from well-established time/frequency features, and are reported alongside DNSMOS for transparency and cross-check.
 
 ### Research Context
 
@@ -322,8 +356,11 @@ Spectral_Subtraction/
 │   ├── VOICEBANK_DEMAND_resampled/    # Resampled dataset (16 kHz)
 │   └── VOICEBANK_DEMAND_resampled_wfb/ # WFB-processed dataset
 ├── configurations/
+│   ├── baseline_clean/
+│   ├── baseline_noise/
 │   ├── BaselineHearingAid/
-│   ├── SEMHearingAid/
+│   ├── SEMHearingAid/                  # Paper algorithm (warped FB, apcoefficient=0.5)
+│   └── SEMHearingAid_uFB/               # WFB ablation (uniform FB, apcoefficient=0.0)
 ├── results/
 │   └── VOICEBANK_DEMAND/              # Evaluation results
 ├── scripts/
@@ -331,10 +368,11 @@ Spectral_Subtraction/
 │   ├── run_evaluation.jl              # Evaluation script
 │   └── update_readme_benchmark.jl     # Benchmark results update script
 ├── src/
-│   └── Experiments.jl                 # Main evaluation module
-└── dependencies/
-    ├── HADatasets/                    # Dataset and metrics module
-    └── VirtualHearingAid/             # Hearing aid processing module
+│   ├── Experiments.jl                 # Main evaluation module
+│   ├── HADatasets/                    # Dataset loaders and metrics (PESQ, DNSMOS, CSIG/CBAK/COVL)
+│   ├── HASoundProcessing/             # SEM factor graph + inference rules
+│   └── VirtualHearingAid/             # WFB front-end and hearing-aid backends
+└── python_modules/                    # PyCall-side wrappers (dnsmos_wrapper, composite_wrapper)
 ```
 
 ## Key Concepts
@@ -370,14 +408,18 @@ The input signal passes through a cascade of first-order all-pass filters, produ
 
 ## Reproducing the Paper Results
 
-To reproduce the results reported in the paper:
+To reproduce the results reported in the paper, including the reviewers'-feedback revision that adds the WFB ablation and the composite metrics:
 
 1. Prepare the `VOICEBANK_DEMAND_resampled_wfb` dataset by following Steps 1 and 2 in this README.
 
-2. Run the hearing aid configurations:
+2. Run the hearing-aid configurations, passing `--composite` so that each run reports both the DNSMOS metrics (SIG, BAK, OVRL) and the Hu & Loizou composite metrics (CSIG, CBAK, COVL):
 
    ```bash
-   julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml
+   # Main paper algorithm (warped filter bank, apcoefficient = 0.5)
+   julia scripts/run_evaluation.jl configurations/SEMHearingAid/SEMHearingAid.toml --composite
+
+   # WFB ablation (uniform filter bank, apcoefficient = 0.0)
+   julia scripts/run_evaluation.jl configurations/SEMHearingAid_uFB/SEMHearingAid_uFB.toml --composite
    ```
 
 3. Update the README tables:
@@ -391,13 +433,15 @@ To reproduce the results reported in the paper:
    results/VOICEBANK_DEMAND/<Device>/run_<timestamp>/
    ```
 
-This reproduces the tables in the paper's results section.
+   Each run directory contains a single `results.csv` with all seven metrics (PESQ, SIG, BAK, OVRL, CSIG, CBAK, COVL) plus the three summary CSVs broken down by SNR and by (environment, SNR).
+
+This reproduces every table in the paper's results section, including the WFB ablation and the composite-metric columns added in the revision.
 
 ## Extending the Framework
 
 To add a new hearing aid algorithm:
 
-1. **Implement the backend** in `dependencies/VirtualHearingAid` (create a new `<Name>Backend` type).
+1. **Implement the backend** in `src/VirtualHearingAid/` (create a new `<Name>Backend` type).
 
 2. **Create a configuration file** in `configurations/<NewHearingAid>/<NewHearingAid>.toml`:
    - `[parameters.hearingaid]` with `type = "<NewHearingAid>"`
@@ -443,12 +487,14 @@ The metrics evaluation functionality relies on Python integration and the follow
 - **PyCall**: Python integration (for full metrics functionality)
 - **pesq**: Python PESQ implementation (MIT License)
 - **dnsmos_wrapper**: Custom wrapper for Microsoft DNSMOS (Creative Commons Attribution 4.0 International)
+- **pysepm**: Python port of Loizou's composite-metrics MATLAB code, used for CSIG/CBAK/COVL (MIT-style licence; installed from the upstream GitHub archive)
 
 These dependencies are automatically installed when running the Python installation script:
 ```bash
-cd dependencies/HADatasets
 python install_python_deps.py
 ```
+
+If `pysepm` cannot be installed for some reason, PESQ and DNSMOS continue to work; only the optional `--composite` path is disabled.
 
 ## Third-Party Licenses
 
@@ -496,6 +542,21 @@ Licensed under **Creative Commons Attribution 4.0 International**:
   howpublished = {Edinburgh DataShare},
   doi = {10.7488/ds/2117},
   url = {https://doi.org/10.7488/ds/2117}
+}
+```
+
+### Hu & Loizou Composite Metrics (CSIG/CBAK/COVL)
+
+```bibtex
+@article{hu2008evaluation,
+  title={Evaluation of Objective Quality Measures for Speech Enhancement},
+  author={Hu, Yi and Loizou, Philipos C.},
+  journal={IEEE Transactions on Audio, Speech, and Language Processing},
+  volume={16},
+  number={1},
+  pages={229--238},
+  year={2008},
+  publisher={IEEE}
 }
 ```
 

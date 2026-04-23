@@ -19,13 +19,18 @@ RESULTS_DIR = joinpath(@__DIR__, "..", "results", "VOICEBANK_DEMAND")
 FIGURES_DIR = joinpath(@__DIR__, "..", "figures")
 README_PATH = joinpath(@__DIR__, "..", "README.md")
 
-# Metrics to plot
-METRICS = ["PESQ", "SIG", "BAK", "OVRL"]
+# Metrics to plot. CSIG/CBAK/COVL are included when the evaluation was run
+# with --composite; runs without them are skipped per-metric by the table
+# builders below without error.
+METRICS = ["PESQ", "SIG", "BAK", "OVRL", "CSIG", "CBAK", "COVL"]
 METRIC_LABELS = Dict(
     "PESQ" => "PESQ (1-5)",
     "SIG" => "SIG (1-5)",
     "BAK" => "BAK (1-5)",
-    "OVRL" => "OVRL (1-5)"
+    "OVRL" => "OVRL (1-5)",
+    "CSIG" => "CSIG (1-5)",
+    "CBAK" => "CBAK (1-5)",
+    "COVL" => "COVL (1-5)"
 )
 
 
